@@ -1,11 +1,10 @@
 import json, re, subprocess
 from pathlib import Path
 
-import yaml
-
-from state import STORE, run_dir
+from state import STORE, phase_spec, run_dir
 
 CI_PASS = {"SUCCESS", "SKIPPED", "NEUTRAL"}
+FINDING = re.compile(r"^\s*[-*]\s*(hard|soft)\b", re.I | re.M)  # one finding per line in a review report
 
 
 def decisions_written(state):
@@ -40,14 +39,30 @@ def committed_and_tasks_done(state):
 
 
 def review_passed(state):
-    files = [p for p in (run_dir(state["key"]) / "reviews").glob("*.md") if p.stem.isdigit()]
-    if not files:
-        return False, ["no review file in reviews/"]
-    latest = max(files, key=lambda p: int(p.stem))
-    front = re.match(r"---\n(.*?)\n---", latest.read_text(), re.S)
-    verdict = (yaml.safe_load(front.group(1)) or {}).get("verdict") if front else None
-    ok = verdict == "pass"
-    return ok, [] if ok else [f"{latest.name} verdict is {verdict}, not pass"]
+    """The reviewers write the reports. The engine counts the `hard` findings itself."""
+    wt = state["worktree"]
+    if not Path(wt).is_dir():
+        return False, [f"worktree {wt} does not exist"]
+    commit_time = int(shell(["git", "log", "-1", "--format=%ct"], wt)[1] or 0)
+    reasons = []
+    for agent in phase_spec("review")["agents"]:
+        axis = agent.removeprefix("work-reviewer-")
+        report = run_dir(state["key"]) / "reviews" / f"{axis}.md"
+        reasons += report_problems(agent, report, commit_time)
+    return not reasons, reasons
+
+
+def report_problems(agent, report, commit_time):
+    if not report.exists():
+        return [f"{agent}: no report at {report}; dispatch it"]
+    if int(report.stat().st_mtime) < commit_time:
+        return [f"{agent}: report is older than the last commit; dispatch it again"]
+    text = report.read_text()
+    kinds = [kind.lower() for kind in FINDING.findall(text)]
+    if not kinds and not text.strip().lower().startswith("no findings"):
+        return [f"{agent}: report has no `- hard:` or `- soft:` lines and is not `No findings.`"]
+    hard = kinds.count("hard")
+    return [f"{agent}: {hard} hard finding(s) open in {report.name}"] if hard else []
 
 
 def branch_pushed(state):

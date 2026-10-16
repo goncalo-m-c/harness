@@ -8,7 +8,7 @@ HERE = Path(__file__).parent
 STORE = Path(os.environ["WORK_STORE"])
 PIPELINE = yaml.safe_load((HERE / "pipeline.yaml").read_text())
 PHASES = PIPELINE["phases"]
-EVIDENCE_PHASES = ("grill", "review")  # phases where work_complete(evidence) carries the file body
+EVIDENCE_PHASES = ("grill",)  # phases where work_complete(evidence) carries the file body
 
 
 def run_dir(key):
@@ -53,16 +53,10 @@ def log_task(state, kind, request):
 
 
 def write_evidence(state, text):
-    """The main window passes grill decisions and the merged review; the engine writes the file."""
-    folder = run_dir(state["key"])
-    if state["phase"] == "grill":
-        path = folder / "decisions.md"
-    else:
-        taken = [int(p.stem) for p in (folder / "reviews").glob("*.md") if p.stem.isdigit()]
-        path = folder / "reviews" / f"{max(taken, default=0) + 1:02d}.md"
+    """The main window passes the grill decisions; the engine writes the file."""
+    path = run_dir(state["key"]) / "decisions.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text.strip() + "\n")
-
 
 
 def now():

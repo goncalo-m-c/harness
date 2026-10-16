@@ -55,7 +55,7 @@ def work_next(key: str) -> str:
 @mcp.tool()
 def work_complete(key: str, evidence: str = "") -> str:
     """Run the gate of the current phase. On pass, advance or wait for approval.
-    EVIDENCE is the grill decisions or the merged review (the engine writes the file), or the PR URL."""
+    EVIDENCE is the grill decisions (the engine writes the file), or the PR URL. Review needs none."""
     state = run_state(key)
     if state["status"] != "in_progress":
         record(state, "complete_refused", f"status is {state['status']}")
