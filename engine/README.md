@@ -53,6 +53,13 @@ Do not auto-approve `work_approve`. The client must ask you each time.
 A reviewer must not use the same model as the implementer.
 Every dispatch block names the model. The main window passes it as the Agent tool's `model`.
 
+## Rules
+
+A phase in `pipeline.yaml` can list `rules: [git, code-style]`. These are files in `../rules/`.
+`work_next` pastes their text into the instructions, so the agent does not need to find them.
+In a subagent phase the text goes inside the subagent prompt, because subagents do not see the main chat.
+`work_task` (kind `edit`) gets the rules of the implement phase.
+
 ## Files the engine writes
 
 The main window writes nothing in the store. The `work2` skill forbids it.

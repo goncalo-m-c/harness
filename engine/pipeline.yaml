@@ -3,6 +3,7 @@
 # agent: main works in the chat window; any other value is dispatched as a subagent.
 # tier / agents: default tier per subagent (fast, standard, strong). The user confirms the models at work_start.
 # client_models: turns a tier into a model name. WORK_CLIENT picks the table (default: claude).
+# rules: files from rules/ pasted into the instructions. Subagent phases get them inside the subagent prompt.
 # needs_approval: the human must call work_approve before the next phase starts.
 client_models:
   claude: {fast: haiku, standard: sonnet, strong: opus}
@@ -10,6 +11,7 @@ phases:
   - name: grill
     agent: main
     instructions: phases/grill.md
+    rules: [communication, subagents]
     gate: decisions_written          # runs/<key>/decisions.md is non-empty
   - name: spec
     agent: work-spec-writer
@@ -21,6 +23,7 @@ phases:
     agent: work-implementer
     tier: fast
     instructions: phases/implement.md
+    rules: [code-style, commands, git]
     gate: committed_and_tasks_done   # >=1 commit ahead of origin/main, clean tree, no "- [ ]" in tasks.md
   - name: review
     agents:
@@ -33,9 +36,11 @@ phases:
     agent: work-pr
     tier: fast
     instructions: phases/pr.md
+    rules: [git]
     gate: branch_pushed              # refs/remotes/origin/<branch> == HEAD
   - name: ci
     agent: work-ci-watcher
     tier: fast
     instructions: phases/ci.md
+    rules: [commands, git]
     gate: ci_green                   # runs/<key>/ci/latest.json is for HEAD and every check is SUCCESS, SKIPPED or NEUTRAL
