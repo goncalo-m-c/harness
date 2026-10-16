@@ -65,3 +65,11 @@ In a subagent phase the text goes inside the subagent prompt, because subagents 
 The main window writes nothing in the store. The `work` skill forbids it.
 `work_complete(key, evidence)` in `grill` writes `runs/<KEY>/decisions.md` from `evidence` (an empty `evidence` keeps an existing file).
 In `review` it writes the next `runs/<KEY>/reviews/NN.md` from `evidence`. Subagents write their own files (spec, `ci/`).
+
+## Skip attempts
+
+Each time an agent tries to skip, the engine adds a line to `history` in `state.json`:
+`gate_failed` (the gate did not pass), `complete_refused` (finish while approval is pending or the run is done) and `approve_refused` (approve when nothing waits).
+The `detail` field says why. Count them for one run:
+
+    jq '[.history[] | select(.event | test("failed|refused"))] | length' runs/<KEY>/state.json

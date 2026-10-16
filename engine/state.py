@@ -34,9 +34,12 @@ def advance(state):
     record(state, "entered")
 
 
-def record(state, event):
+def record(state, event, detail=""):
     """Append to history and save atomically."""
-    state["history"].append({"ts": now(), "phase": state["phase"], "event": event})
+    entry = {"ts": now(), "phase": state["phase"], "event": event}
+    if detail:
+        entry["detail"] = detail
+    state["history"].append(entry)
     path = run_dir(state["key"]) / "state.json"
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")

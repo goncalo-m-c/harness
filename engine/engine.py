@@ -58,12 +58,14 @@ def work_complete(key: str, evidence: str = "") -> str:
     EVIDENCE is the grill decisions or the merged review (the engine writes the file), or the PR URL."""
     state = run_state(key)
     if state["status"] != "in_progress":
+        record(state, "complete_refused", f"status is {state['status']}")
         return f"Cannot complete: status is {state['status']}. Call work_next."
     spec = phase_spec(state["phase"])
     if state["phase"] in EVIDENCE_PHASES and evidence.strip():
         write_evidence(state, evidence)
     ok, reasons = GATES[spec["gate"]](state)
     if not ok:
+        record(state, "gate_failed", "; ".join(reasons)[:300])
         return "Gate failed:\n- " + "\n- ".join(reasons)
     if state["phase"] == "pr":
         state["pr_url"] = evidence
@@ -80,6 +82,7 @@ def work_approve(key: str) -> str:
     """Human approval for the current phase. Valid only when approval is pending."""
     state = run_state(key)
     if state["status"] != "awaiting_approval":
+        record(state, "approve_refused", f"status is {state['status']}")
         return f"Refused: status is {state['status']}, nothing to approve."
     record(state, "approved")
     advance(state)
