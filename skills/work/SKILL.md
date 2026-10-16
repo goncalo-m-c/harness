@@ -12,7 +12,7 @@ The `work` MCP server owns the state and the gates. You own the conversation and
 Rules:
 1. Call `work_start(key, slug, repo)`. If the run exists, call `work_next(key)`. Otherwise it returns a model table. Show it to the user and ask them to confirm or change models. Then call `work_start` again with `models={agent: model}` for every agent.
 2. Do exactly what `work_next` returns. Nothing more, nothing less.
-3. When the phase output is ready, call `work_complete(key, evidence)`. In grill, `evidence` is the decisions markdown. In review, it is the merged review markdown. The engine writes those files. Write nothing in `{store}` yourself.
+3. When the phase output is ready, call `work_complete(key, evidence)`. In grill, `evidence` is the decisions markdown, and the engine writes the file. In review, pass no evidence: the reviewers write their own reports and the engine reads them. Write nothing in `{store}` yourself.
 4. If the gate fails, fix the reasons and call `work_complete` again.
 5. When approval is pending, ask the user and wait.
 6. Never call `work_approve` without the user's explicit yes in this chat.

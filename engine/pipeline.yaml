@@ -30,7 +30,7 @@ phases:
       work-reviewer-spec: strong
       work-reviewer-standards: standard
     instructions: phases/review.md
-    gate: review_passed              # latest reviews/NN.md has `verdict: pass`
+    gate: review_passed              # reviews/spec.md and standards.md are newer than HEAD and have no `- hard:` line
     needs_approval: true             # approval = permission to push
   - name: pr
     agent: work-pr

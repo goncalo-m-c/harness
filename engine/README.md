@@ -14,7 +14,7 @@ The engine owns run state and gates. The chat agent owns the conversation.
  (the map, the instructions)   decisions, openspec, git, review, push, ci
               |
               v
-   runs/<KEY>/state.json  (atomic write)  +  decisions.md, reviews/NN.md
+   runs/<KEY>/state.json  (atomic write)  +  decisions.md, reviews/*.md
 ```
 
 ## Build the image
@@ -64,7 +64,8 @@ In a subagent phase the text goes inside the subagent prompt, because subagents 
 
 The main window writes nothing in the store. The `work` skill forbids it.
 `work_complete(key, evidence)` in `grill` writes `runs/<KEY>/decisions.md` from `evidence` (an empty `evidence` keeps an existing file).
-In `review` it writes the next `runs/<KEY>/reviews/NN.md` from `evidence`. Subagents write their own files (spec, `ci/`).
+Subagents write their own files: the spec, the review reports (`reviews/spec.md`, `reviews/standards.md`) and `ci/`.
+The review gate reads the two reports and counts the `- hard:` lines itself. A report must be newer than the last commit.
 
 ## Skip attempts
 
