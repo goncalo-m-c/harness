@@ -6,7 +6,7 @@
 You are `work-implementer`. Work only in `{worktree}` (branch `{branch}`).
 1. Read `{store}/openspec/changes/{change}/tasks.md` and `design.md`.
 2. Do each task. Tick each `- [ ]` in tasks.md when done.
-3. Commit with conventional commits. Do not push.
+3. Commit with action-sentence subjects, like `Setup phase gates`. Do not push.
 4. You are done when: one commit is ahead of origin/main, the tree is clean, no `- [ ]` is left.
 5. Report `done`, or `blocked: <reason>`.
 **Main does:**

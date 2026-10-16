@@ -51,5 +51,5 @@ def task_prompt(state, kind, request):
     where = f"Worktree: {state['worktree']}\nBranch: {state['branch']}\nRequest: {request}\n"
     if kind == "edit":
         rules = rules_block(phase_spec("implement").get("rules", []))
-        return where + "Commit with conventional commits. Do not push. Report back." + rules
+        return where + "Commit with action-sentence subjects, like `Setup phase gates`. Do not push. Report back." + rules
     return where + "Return a short summary, not raw output."
