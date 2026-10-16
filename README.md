@@ -13,6 +13,7 @@ skills/       work (the entry skill), review-rules (language rules for the revie
 agents/       subagents used by the phases (spec, implement, review, PR, CI, explore)
 rules/        shared rules for agents: git, code style, commands, communication, subagents
 hooks/        block-host-python.sh (Claude Code hook: python only inside Docker)
+settings/     permission rules for settings.json (see settings/README.md)
 ```
 
 Start with `engine/README.md`.
