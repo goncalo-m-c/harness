@@ -14,13 +14,27 @@ agents/       subagents used by the phases (spec, implement, review, PR, CI, exp
 rules/        shared rules for agents: git, code style, commands, communication, subagents
 hooks/        block-host-python.sh (Claude Code hook: python only inside Docker)
 settings/     permission rules for settings.json (see settings/README.md)
+clients/      one install note per tool (claude.md)
+.claude/      harness-setup skill (works before anything is installed)
 ```
 
 Start with `engine/README.md`.
 
+## Install
+
+Open Claude Code in this folder and run `/harness-setup`, or follow the steps yourself.
+You need Docker. Set `STORE` to the folder where runs and specs will live.
+
+1. Build the engine and create the store. This is the same for every tool.
+
+       docker build -t work-engine:poc engine
+       mkdir -p "$STORE" && docker run --rm -v "$STORE:$STORE" work-engine:poc openspec init --tools none "$STORE"
+
+2. Connect your tool: [`clients/claude.md`](clients/claude.md). A new tool needs one new file in `clients/`.
+
 ## Not in this repo yet
 
-- Install steps for Cursor and Claude Code.
+- Install notes for Cursor (`clients/cursor.md`).
 - Cost per model.
 - Tests for the engine.
 
