@@ -1,0 +1,45 @@
+# The engine reads this file. Phases run top to bottom.
+# Each gate is a code function in gates.py with the same name.
+# agent: main works in the chat window; any other value is dispatched as a subagent.
+# model / agents: default model per subagent. The user confirms them at work_start.
+# needs_approval: the human must call work_approve before the next phase starts.
+allowed_models:
+  anthropic: [claude-fable-5-1-thinking-high, claude-opus-5-5-medium, claude-sonnet-5-5-high]
+  openai: [gpt-5.6-sol-high]
+  cursor: [composer-2.5-fast]
+  google: [gemini-4-argon-high]
+  xai: [grok-4.7-high, cursor-grok-4.6-high-fast]
+  other: [muse-wonder-1.0-high]
+phases:
+  - name: grill
+    agent: main
+    instructions: phases/grill.md
+    gate: decisions_written          # runs/<key>/decisions.md is non-empty
+  - name: spec
+    agent: work-spec-writer
+    model: claude-sonnet-5-5-high
+    instructions: phases/spec.md
+    gate: openspec_valid             # openspec validate <change> --strict (cwd=store)
+    needs_approval: true
+  - name: implement
+    agent: work-implementer
+    model: composer-2.5-fast
+    instructions: phases/implement.md
+    gate: committed_and_tasks_done   # >=1 commit ahead of origin/main, clean tree, no "- [ ]" in tasks.md
+  - name: review
+    agents:
+      work-reviewer-spec: gpt-5.6-sol-high
+      work-reviewer-standards: gemini-4-argon-high
+    instructions: phases/review.md
+    gate: review_passed              # latest reviews/NN.md has `verdict: pass`
+    needs_approval: true             # approval = permission to push
+  - name: pr
+    agent: work-pr
+    model: composer-2.5-fast
+    instructions: phases/pr.md
+    gate: branch_pushed              # refs/remotes/origin/<branch> == HEAD
+  - name: ci
+    agent: work-ci-watcher
+    model: composer-2.5-fast
+    instructions: phases/ci.md
+    gate: ci_green                   # runs/<key>/ci/latest.json is for HEAD and every check is SUCCESS, SKIPPED or NEUTRAL
