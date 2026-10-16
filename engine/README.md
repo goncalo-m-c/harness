@@ -3,7 +3,7 @@
 The engine owns run state and gates. The chat agent owns the conversation.
 
 ```
- you <-> agent chat (/work2 KEY SLUG REPO)
+ you <-> agent chat (/work KEY SLUG REPO)
               |  MCP over stdio (docker run -i)
               v
    work_start | work_next | work_complete | work_approve | work_task  <- engine.py
@@ -62,6 +62,6 @@ In a subagent phase the text goes inside the subagent prompt, because subagents 
 
 ## Files the engine writes
 
-The main window writes nothing in the store. The `work2` skill forbids it.
+The main window writes nothing in the store. The `work` skill forbids it.
 `work_complete(key, evidence)` in `grill` writes `runs/<KEY>/decisions.md` from `evidence` (an empty `evidence` keeps an existing file).
 In `review` it writes the next `runs/<KEY>/reviews/NN.md` from `evidence`. Subagents write their own files (spec, `ci/`).

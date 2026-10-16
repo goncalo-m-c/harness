@@ -9,7 +9,7 @@ The agent cannot skip a phase, because it can only move forward by passing a gat
 
 ```
 engine/       MCP server, pipeline.yaml (the map), phases/ (instructions per phase), Dockerfile
-skills/       work2 (the entry skill), review-rules (language rules for the review)
+skills/       work (the entry skill), review-rules (language rules for the review)
 agents/       subagents used by the phases (spec, implement, review, PR, CI, explore)
 rules/        shared rules for agents: git, code style, commands, communication, subagents
 hooks/        block-host-python.sh (Claude Code hook: python only inside Docker)

@@ -1,4 +1,4 @@
-"""Work v2 engine: an MCP server that owns run state and checks phase gates.
+"""Work engine: an MCP server that owns run state and checks phase gates.
 The 5 tools below are the public contract. pipeline.yaml is the map."""
 
 from mcp.server.fastmcp import FastMCP

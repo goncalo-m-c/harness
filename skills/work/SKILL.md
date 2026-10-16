@@ -1,10 +1,10 @@
 ---
-name: work2
+name: work
 description: Run one piece of work through grill, spec, implement, review, PR and CI, with an engine that owns state and gates. Args are KEY SLUG REPO.
 disable-model-invocation: true
 ---
 
-# Work v2
+# Work
 
 Args: `KEY SLUG REPO` (for example `ABC-123 my-slug /path/to/my-repo`).
 The `work` MCP server owns the state and the gates. You own the conversation and the work.
