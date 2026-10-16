@@ -1,7 +1,10 @@
+import os
+
 from state import PHASES, PIPELINE, phase_spec
 
-ALLOWED_MODELS = PIPELINE["allowed_models"]
-ALLOWED_NAMES = [m for names in ALLOWED_MODELS.values() for m in names]
+CLIENT = os.environ.get("WORK_CLIENT", "claude")
+TIER_MODELS = PIPELINE["client_models"][CLIENT]
+ALLOWED_NAMES = list(TIER_MODELS.values())
 
 
 def models_table():
@@ -26,9 +29,9 @@ def model_problems(models):
     if not problems:
         implementer = models[phase_spec("implement")["agent"]]
         problems += [
-            f"{a}: {models[a]} has the same vendor as the implementer ({vendor_of(implementer)})"
+            f"{a}: {models[a]} is the same model as the implementer"
             for a in phase_spec("review")["agents"]
-            if vendor_of(models[a]) == vendor_of(implementer)
+            if models[a] == implementer
         ]
     return problems
 
@@ -36,9 +39,7 @@ def model_problems(models):
 def phase_models(phase):
     """Default {agent: model} of a phase; empty when the main window does the work."""
     if "agents" in phase:
-        return phase["agents"]
-    return {} if phase["agent"] == "main" else {phase["agent"]: phase["model"]}
-
-
-def vendor_of(model):
-    return next(v for v, names in ALLOWED_MODELS.items() if model in names)
+        tiers = phase["agents"]
+    else:
+        tiers = {} if phase["agent"] == "main" else {phase["agent"]: phase["tier"]}
+    return {agent: TIER_MODELS[tier] for agent, tier in tiers.items()}

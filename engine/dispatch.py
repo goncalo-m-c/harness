@@ -30,7 +30,7 @@ def dispatch_block(agent_model, prompt, main_steps):
     names = " and ".join(f"`{a}` with model `{m}`" for a, m in agent_model.items())
     return (
         f"Dispatch subagent{'s' if len(agent_model) > 1 else ''} {names}, with the prompt below. "
-        "Pass each model as the Task tool's `model` parameter. "
+        "Pass each model as the Agent tool's `model` parameter. "
         "Do not do this work in the main window.\n\n"
         f"### Subagent prompt\n{prompt.strip()}\n\n### Main window steps\n{main_steps.strip()}"
     )

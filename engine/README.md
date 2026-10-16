@@ -46,11 +46,12 @@ Do not auto-approve `work_approve`. The client must ask you each time.
 
 ## Models
 
-`pipeline.yaml` lists `allowed_models` by vendor and a default model per subagent.
+`pipeline.yaml` gives each subagent a tier (fast, standard or strong). `client_models` turns a tier into a model name.
+`WORK_CLIENT` picks the table. The default is `claude` (haiku, sonnet, opus).
 `work_start` without `models` creates nothing and returns the table. The user confirms it.
 `work_start` with `models={agent: model}` validates it and stores it in `state.json`.
-A reviewer must not share a vendor with the implementer.
-Every dispatch block names the model. The main window passes it as the Task tool's `model`.
+A reviewer must not use the same model as the implementer.
+Every dispatch block names the model. The main window passes it as the Agent tool's `model`.
 
 ## Files the engine writes
 

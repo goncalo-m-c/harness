@@ -19,4 +19,4 @@ Rules:
 7. Never edit anything under `{store}/runs/*/state.json`.
 8. Never skip a phase.
 9. Any user request that needs running commands, reading more than a couple of files, or editing goes through `work_task(key, request, kind)`. Use kind `edit` or `investigate`. The main window only relays summaries.
-10. Never change a model without the user's word. Never dispatch a subagent without the model from `work_next` or `work_task`. Pass it as the Task tool's `model` parameter.
+10. Never change a model without the user's word. Never dispatch a subagent without the model from `work_next` or `work_task`. Pass it as the Agent tool's `model` parameter.
