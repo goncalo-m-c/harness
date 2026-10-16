@@ -1,0 +1,47 @@
+# Claude Code
+
+Connect the harness to Claude Code. Do the README install step 1 first (image and store).
+
+Set these in your shell. Use full paths.
+
+    HARNESS=~/Projects/harness      # this repo
+    STORE=~/Projects/work-store     # runs and specs (README step 1)
+    ROOT=~/Projects                 # the folder that holds your repos. The engine only sees this folder.
+
+## 1. Add the MCP server
+
+    claude mcp add work --scope user -- docker run -i --rm \
+      -v "$ROOT:$ROOT" -v "$STORE:$STORE" -e "WORK_STORE=$STORE" \
+      work-engine:poc python "$HARNESS/engine/engine.py"
+
+Check it with `claude mcp get work`.
+
+## 2. Link the skills and agents
+
+The phase text points to `~/.agents/skills`, so the skills go there first. Claude Code links to them.
+If a path already exists as a real folder, `ln` would put the link inside it. Check with `ls -ld` first.
+
+    mkdir -p ~/.agents/skills ~/.claude/skills ~/.claude/agents
+    for s in work review-rules; do
+      ln -sfn "$HARNESS/skills/$s" ~/.agents/skills/$s
+      ln -sfn ~/.agents/skills/$s ~/.claude/skills/$s
+    done
+    for f in "$HARNESS"/agents/work-*.md; do
+      ln -sfn "$f" ~/.claude/agents/$(basename "$f")
+    done
+
+## 3. Add the permission rules
+
+Copy the `deny` and `ask` lists from `settings/permissions.example.json` into `~/.claude/settings.json`, under `permissions`.
+If you already have those lists, add the entries to them. Save a copy first: `cp ~/.claude/settings.json ~/.claude/settings.json.bak-harness`.
+
+Optional: block python outside Docker. Add this under `hooks.PreToolUse` (replace `<HARNESS>` with the full path):
+
+    {"matcher": "Bash", "hooks": [{"type": "command", "command": "<HARNESS>/hooks/block-host-python.sh"}]}
+
+## 4. Restart and check
+
+Restart Claude Code. Rules and MCP servers load at start. Then:
+
+1. Run the 5-step test in `settings/README.md`, in a throwaway git repo.
+2. Ask Claude to call `work_start` with a key, a slug and a repo path, and no `models`. It must return the model table and create nothing.
