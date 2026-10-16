@@ -1,0 +1,2 @@
+- Run `python`, `uv`, `pytest`, and similar tools inside official hardened Docker images. Do not invoke them directly on the host.
+- If no hardened image is specified for a tool, ask the user before running it on the host.

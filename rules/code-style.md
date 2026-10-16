@@ -1,0 +1,6 @@
+- Apply SOLID principles.
+- Apply clean-code principles: readable names for functions and variables, functions ordered by call order (callers above callees); in modules with a defined public interface (listeners, plugins, adapters), lead with the public contract and place private helpers below. Small focused functions, no dead code.
+- Name functions by what they *are* when they compute and return a value (`task_key`, `filter_threshold`); name them by what they *do* when they have side effects (`stop_and_log`, `start_profiler`). Use `get_`/`set_` only when the function is literally retrieving or mutating a stored value — not as a generic prefix on computed results.
+- Do not write essays and long comments. Keep comments consise and consider docs for longer explanations
+- If you introduce a design pattern, name it explicitly (e.g. "I'm applying the Strategy pattern here because…") and confirm with the user before committing to it.
+- Match the surrounding code's existing style when in conflict with these rules — consistency wins.
