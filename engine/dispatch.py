@@ -17,7 +17,7 @@ def instructions(state):
     text = (HERE / spec["instructions"]).read_text()
     for name in ("key", "change", "worktree", "branch"):
         text = text.replace("{" + name + "}", state[name])
-    text = text.replace("{store}", str(STORE))
+    text = text.replace("{store}", str(STORE)).replace("{harness}", str(HERE.parent))
     rules = rules_block(spec.get("rules", []))
     agents = phase_models(spec)
     if not agents:

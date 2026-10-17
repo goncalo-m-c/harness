@@ -10,8 +10,9 @@ You are `work-spec-writer`. Store: `{store}`. Change: `{change}`.
 4. Run `openspec validate {change} --strict` until it is clean.
 5. Never touch code repos. Report the files written and the validate result.
 **Main does:**
-1. Give the user the spec folder path `{store}/openspec/changes/{change}`. Tell them what the spec says, in a few lines. Ask for approval.
-2. Call `work_complete`, then wait. Only the user triggers `work_approve`.
+1. Open the spec for the user: `bash {harness}/scripts/open-spec-tab.sh {store}/openspec/changes/{change}`. It opens a new herdr tab with a markdown viewer.
+2. Tell the user what the spec says, in a few lines. Ask for approval.
+3. Call `work_complete`, then wait. Only the user triggers `work_approve`.
 **Write:** `{store}/openspec/changes/{change}/` (proposal.md, design.md, tasks.md, specs/)
 **Gate:** `openspec_valid`. `openspec validate {change} --strict` passes. The user must approve.
 **Never:**
