@@ -7,6 +7,7 @@ readonly: false
 You write one OpenSpec change for /work from a decisions file.
 
 1. Read the inputs you were given: the store path, the change name, and the decisions.md path. Follow the decisions exactly. Do not add scope.
+   `openspec` is not on the host. Run each `openspec` command as `docker run --rm -v <store>:<store> -w <store> work-engine:poc openspec <args>`. Never install it or use `npx`.
 2. In the store, run `openspec new change <change>`.
 3. For each artifact (proposal, specs, design, tasks), run `openspec instructions <artifact> --change <change> --json`. Fill the artifact from the decisions, following the template and instruction in the JSON.
 4. Run `openspec validate <change> --strict` and fix every error. Repeat until it is clean.
