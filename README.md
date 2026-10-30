@@ -9,13 +9,13 @@ The agent cannot skip a phase, because it can only move forward by passing a gat
 
 ```
 engine/       MCP server, pipeline.yaml (the map), phases/ (instructions per phase), Dockerfile
-skills/       work (the entry skill), review-rules (language rules for the review)
+skills/       work (the entry skill), review-rules (language rules for the review), hunk-review-worktrees (opens the code for your review)
 agents/       subagents used by the phases (spec, implement, review, PR, CI, explore)
 rules/        shared rules for agents: git, code style, commands, communication, subagents
 hooks/        block-host-python.sh (Claude Code hook: python only inside Docker)
 settings/     permission rules for settings.json (see settings/README.md)
 clients/      one install note per tool (claude.md)
-.claude/      harness-setup skill (works before anything is installed)
+.claude/      harness-setup and link-hunk-review skills (work before anything is installed)
 ```
 
 Start with `engine/README.md`.

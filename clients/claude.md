@@ -20,9 +20,10 @@ Check it with `claude mcp get work`.
 
 The phase text points to `~/.agents/skills`, so the skills go there first. Claude Code links to them.
 If a path already exists as a real folder, `ln` would put the link inside it. Check with `ls -ld` first.
+`hunk-review-worktrees` needs `hunk`, `herdr` and `jq`. To add only this skill, run `/link-hunk-review` in this repo.
 
     mkdir -p ~/.agents/skills ~/.claude/skills ~/.claude/agents
-    for s in work review-rules; do
+    for s in work review-rules hunk-review-worktrees; do
       ln -sfn "$HARNESS/skills/$s" ~/.agents/skills/$s
       ln -sfn ~/.agents/skills/$s ~/.claude/skills/$s
     done
