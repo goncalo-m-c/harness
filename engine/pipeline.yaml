@@ -21,14 +21,14 @@ phases:
     needs_approval: true
   - name: implement
     agent: work-implementer
-    tier: fast
+    tier: standard
     instructions: phases/implement.md
     rules: [code-style, commands, git]
     gate: committed_and_tasks_done   # >=1 commit ahead of origin/main, clean tree, no "- [ ]" in tasks.md
   - name: review
     agents:
       work-reviewer-spec: strong
-      work-reviewer-standards: standard
+      work-reviewer-standards: strong
     instructions: phases/review.md
     gate: review_passed              # reviews/spec.md and standards.md are newer than HEAD and have no `- hard:` line
     needs_approval: true             # approval = permission to push

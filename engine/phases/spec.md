@@ -4,6 +4,7 @@
 **Agent:** `work-spec-writer`
 **Subagent does:**
 You are `work-spec-writer`. Store: `{store}`. Change: `{change}`.
+`openspec` is not on the host. Run each `openspec` command as `docker run --rm -v {store}:{store} -w {store} work-engine:poc openspec <args>`.
 1. Read `{store}/runs/{key}/decisions.md`.
 2. In `{store}`, run `openspec new change {change}`.
 3. For proposal, specs, design, tasks: run `openspec instructions <artifact> --change {change} --json`. Fill each from the decisions.
