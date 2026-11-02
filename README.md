@@ -12,7 +12,7 @@ I usually struggle with understanding everything that LLMs create and, more ofte
 So I tried to come up with my own workflow to help me work with AI but at the same time keep track of the things that are happening during sessions.
 
 I was seeing these issues a lot:
-- Agents often skips steps while the sessions got longer.
+- Agents often skip steps as the sessions get longer.
 - We started coding before the plan was clear enough.
 - Getting code pushed before I approved and reviewed the diff.
 - Sometimes agents attempting to push to main directly or changing things they shouldn't.
@@ -114,8 +114,8 @@ This is a personal proof of concept. I use it for my own work.
 - Only Claude Code has install notes.
 - The tests cover the review gate only.
 - The permission rules are not full blockers. A command inside `bash -c "..."` can go around them. See [`settings/README.md`](settings/README.md).
-- No cost tracking yet
+- No cost tracking yet.
 
-## Skills this repo expects but does not contain:
+## Skills this repo expects but does not contain
 
 `grilling`, `pr-description`, `git-wt` and `code-review`. The phases and agents point to them by name.
