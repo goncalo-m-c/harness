@@ -6,12 +6,16 @@ A workflow harness for AI coding agents. The agent does the work. A small engine
 grill → spec → [you approve] → implement → review → [you approve the push] → pr → ci
 ```
 
-## Why
+## Why do I use this
+I usually struggle with understanding everything that LLMs create and, more often than not, what I decide in the beginning of a session is not 100% accurate and end up changing.
 
-Give a coding agent a full ticket and it often skips steps.
-It starts to code before the plan is clear.
-It says the tests pass when it did not run them.
-It pushes before anyone looked at the diff.
+So I tried to come up with my own workflow to help me work with AI but at the same time keep track of the things that are happening during sessions.
+
+I was seeing these issues a lot:
+- Agents often skips steps while the sessions got longer.
+- We started coding before the plan was clear enough.
+- Getting code pushed before I approved and reviewed the diff.
+- Sometimes agents attempting to push to main directly or changing things they shouldn't.
 
 Rules in a prompt help, but the agent can still ignore them.
 This harness moves the rules out of the prompt and into code.
@@ -107,13 +111,11 @@ The tests run inside the engine image:
 
 This is a personal proof of concept. I use it for my own work.
 
-- Only Claude Code has install notes. Cursor is next.
+- Only Claude Code has install notes.
 - The tests cover the review gate only.
-- The permission rules are not a wall. A command inside `bash -c "..."` can go around them. See [`settings/README.md`](settings/README.md).
-- It works with GitHub only, because the PR and CI phases use `gh`.
-- The repo must use the `git-wt` layout: each branch is a worktree folder inside the repo folder.
-- There is no cost tracking per model yet.
+- The permission rules are not full blockers. A command inside `bash -c "..."` can go around them. See [`settings/README.md`](settings/README.md).
+- No cost tracking yet
 
-## Skills this repo expects but does not contain
+## Skills this repo expects but does not contain:
 
 `grilling`, `pr-description`, `git-wt` and `code-review`. The phases and agents point to them by name.
