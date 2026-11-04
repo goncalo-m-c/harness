@@ -1,18 +1,19 @@
 ---
 name: work
-description: Run one piece of work through grill, spec, implement, review and PR (with CI), with an engine that owns state and gates. Args are KEY SLUG REPO, or KEY alone to resume a run.
+description: Run one piece of work through grill, spec, implement, review and PR (with CI), with an engine that owns state and gates. Args are a description of the work, in the user's words, or KEY alone to resume a run.
 disable-model-invocation: true
 ---
 
 # Work
 
-Args: `KEY SLUG REPO` (for example `ABC-123 my-slug /path/to/my-repo`), or `KEY` alone to resume a run.
+Args: a description of the work, like `split net worth between me and my partner`, or `KEY` alone to resume a run.
+The user may also name a ticket key they already have (from Jira, for example).
 The `work` MCP server owns the state and the gates. You own the conversation and the work.
 
 Rules:
-1. With `KEY` alone, call `work_next(key)`. Otherwise call `work_start(key, slug, repo)`. If the run exists, call `work_next(key)`. Otherwise it returns a model table. Show it to the user and ask them to confirm or change models. Then call `work_start` again with `models={agent: model}` for every agent.
+1. With `KEY` alone, call `work_next(key)`. Otherwise call `work_start(description)`. It creates nothing and returns the models and the key prefixes in use. Show both to the user. Ask them to confirm or change the models, and to pick a prefix (or give their key). Then call `work_start` again with `description`, `prefix` (or `key`) and `models={agent: model}` for every agent. The engine picks the key.
 2. Do exactly what `work_next` returns. Nothing more, nothing less.
-3. When the phase output is ready, call `work_complete(key, evidence)`. In grill, `evidence` is the decisions markdown, and the engine writes the file. In review, pass no evidence: the reviewers write their own reports and the engine reads them. Write nothing in `{store}` yourself.
+3. When the phase output is ready, call `work_complete(key, evidence)`. In grill, `evidence` is the decisions markdown, and you also pass `slug` and `repo`: the engine writes the file and names the branch. In review, pass no evidence: the reviewers write their own reports and the engine reads them. Write nothing in `{store}` yourself.
 4. If the gate fails, fix the reasons and call `work_complete` again.
 5. When approval is pending, ask the user and wait.
 6. Never call `work_approve` without the user's explicit yes in this chat.

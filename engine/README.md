@@ -3,7 +3,7 @@
 The engine owns run state and gates. The chat agent owns the conversation.
 
 ```
- you <-> agent chat (/work KEY SLUG REPO)
+ you <-> agent chat (/work <description>)
               |  MCP over stdio (docker run -i)
               v
    work_start | work_next | work_complete | work_approve | work_task | work_checkpoint  <- engine.py
@@ -14,7 +14,7 @@ The engine owns run state and gates. The chat agent owns the conversation.
  (the map, the instructions)   decisions, openspec, git, review, push, ci
               |
               v
-   runs/<KEY>/state.json  (atomic write)  +  decisions.md, reviews/*.md
+   runs/<KEY>/state.json  (atomic write)  +  ticket.md, decisions.md, reviews/*.md
 ```
 
 ## Build the image
@@ -48,8 +48,8 @@ Do not auto-approve `work_approve`. The client must ask you each time.
 
 `pipeline.yaml` gives each subagent a tier (fast, standard or strong). `client_models` turns a tier into a model name.
 `WORK_CLIENT` picks the table. The default is `claude` (haiku, sonnet, opus).
-`work_start` without `models` creates nothing and returns the table. The user confirms it.
-`work_start` with `models={agent: model}` validates it and stores it in `state.json`.
+`work_start(description)` without `models` creates nothing. It returns the table and the key prefixes in use. The user confirms the models and picks a prefix.
+`work_start` with `models={agent: model}` validates them, picks the next key for the prefix (or takes the `key` the user gave) and stores the models in `state.json`.
 A reviewer must not use the same model as the implementer.
 Every dispatch block names the model. The main window passes it as the Agent tool's `model`.
 
@@ -63,7 +63,8 @@ In a subagent phase the text goes inside the subagent prompt, because subagents 
 ## Files the engine writes
 
 The main window writes nothing in the store. The `work` skill forbids it.
-`work_complete(key, evidence)` in `grill` writes `runs/<KEY>/decisions.md` from `evidence` (an empty `evidence` keeps an existing file).
+`work_start` writes `runs/<KEY>/ticket.md` from the user's description.
+`work_complete(key, evidence, slug, repo)` in `grill` writes `runs/<KEY>/decisions.md` from `evidence` (an empty `evidence` keeps an existing file). With `slug` and `repo` it sets the change, branch and worktree. Until then they are empty.
 `work_checkpoint(key, summary)` writes `runs/<KEY>/checkpoint.md`. It replaces the previous one.
 Subagents write their own files: the spec, the review reports (`reviews/spec.md`, `reviews/standards.md`) and `ci/`.
 The review gate reads the two reports and counts the `- hard:` lines itself. A report must be newer than the last commit.

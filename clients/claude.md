@@ -68,4 +68,4 @@ Optional: block python outside Docker. Add this under `hooks.PreToolUse` (replac
 Restart Claude Code. Rules and MCP servers load at start. Then:
 
 1. Run the 5-step test in `settings/README.md`, in a throwaway git repo.
-2. Ask Claude to call `work_start` with a key, a slug and a repo path, and no `models`. It must return the model table and create nothing.
+2. Ask Claude to call `work_start` with a description and no `models`. It must return the model table and the key prefixes, and create nothing.

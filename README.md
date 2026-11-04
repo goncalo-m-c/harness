@@ -40,7 +40,7 @@ The agent never merges and never marks a PR ready. That stays with you.
 ## How it works
 
 ```
- you <-> agent chat  (/work KEY SLUG REPO)
+ you <-> agent chat  (/work <description>)
             |  MCP over stdio (docker run -i)
             v
    engine:  work_start | work_next | work_complete | work_approve | work_task
@@ -49,17 +49,18 @@ The agent never merges and never marks a PR ready. That stays with you.
             +-- phases/*.md     what to do in each phase
             +-- gates.py        one function per gate
             v
-   <store>/runs/<KEY>/state.json  +  decisions.md, reviews/, ci/
+   <store>/runs/<KEY>/state.json  +  ticket.md, decisions.md, reviews/, ci/
 ```
 
 A run goes like this:
 
-1. You type `/work ABC-123 my-slug /path/to/repo`. The `work` skill tells the agent to call `work_start`.
-2. The engine shows a model for each subagent. You confirm or change them.
-3. `work_next` returns the instructions for the current phase. For a subagent phase, it returns a ready dispatch: the agent, the model and the full prompt.
-4. When the phase looks done, the agent calls `work_complete`. The engine runs the gate.
-5. If the gate passes, the run moves on. If it fails, the agent gets the reasons.
-6. Two phases wait for you. Only `work_approve` moves past them, and a permission rule makes that tool ask you each time.
+1. You describe the work: `/work split net worth between me and my partner`. The `work` skill tells the agent to call `work_start`.
+2. The engine shows a model for each subagent and the key prefixes in use. You confirm the models and pick a prefix. The engine picks the next key, like `MONEY-2`, and saves your words in `ticket.md`.
+3. Grill turns your words into decisions. At its end you agree on a slug and the repo, and the engine names the branch and the worktree.
+4. `work_next` returns the instructions for the current phase. For a subagent phase, it returns a ready dispatch: the agent, the model and the full prompt.
+5. When the phase looks done, the agent calls `work_complete`. The engine runs the gate.
+6. If the gate passes, the run moves on. If it fails, the agent gets the reasons.
+7. Two phases wait for you. Only `work_approve` moves past them, and a permission rule makes that tool ask you each time.
 
 ## Design choices
 
