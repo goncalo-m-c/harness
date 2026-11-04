@@ -70,7 +70,10 @@ def report_problems(agent, report, commit_time):
 
 def ruff_problems(wt: str, base: str) -> list[str]:
     """Ruff errors on Python lines the branch added. Old code in a changed file does not count."""
-    added = added_lines(wt, base)
+    rc, diff = shell(["git", "diff", "-U0", "--diff-filter=d", f"{base}...HEAD", "--", "*.py", "*.pyi"], wt)
+    if rc != 0:
+        return [f"git diff failed, so ruff could not check: {diff[-300:]}"]
+    added = added_lines(diff)
     if not added:
         return []
     files = sorted({path for path, _ in added})
@@ -82,9 +85,8 @@ def ruff_problems(wt: str, base: str) -> list[str]:
     return [f"ruff: {path}:{row} {e['code']} {e['message']}" for path, row, e in errors if (path, row) in added]
 
 
-def added_lines(wt: str, base: str) -> set[tuple[str, int]]:
-    """(path, line number) for every line the branch added to a .py or .pyi file."""
-    _, diff = shell(["git", "diff", "-U0", "--diff-filter=d", f"{base}...HEAD", "--", "*.py", "*.pyi"], wt)
+def added_lines(diff: str) -> set[tuple[str, int]]:
+    """(path, line number) for every line a `git diff -U0` adds."""
     added, path = set(), ""
     for line in diff.splitlines():
         if line.startswith("+++ b/"):

@@ -21,6 +21,7 @@ class ReviewGateTest(unittest.TestCase):
         (self.repo / "a.txt").write_text("a")
         self.git("add", "-A")
         self.git("commit", "-q", "-m", "Add a")
+        self.git("update-ref", "refs/remotes/origin/main", "HEAD")  # the ruff check diffs against origin/main
         self.state = {"key": "T-1", "worktree": str(self.repo)}
         self.reviews = STORE / "runs" / "T-1" / "reviews"
         self.reviews.mkdir(parents=True, exist_ok=True)
@@ -92,7 +93,7 @@ class ReviewGateTest(unittest.TestCase):
 class RuffGateTest(unittest.TestCase):
     """Ruff errors count only on lines the branch added. Needs ruff, as in the engine image."""
 
-    def setUp(self):
+    def setUp(self) -> None:
         self.repo = Path(tempfile.mkdtemp())
         self.git("init", "-q")
         (self.repo / "old.py").write_text("import os\n")  # an old error: unused import
@@ -100,27 +101,31 @@ class RuffGateTest(unittest.TestCase):
         self.git("commit", "-q", "-m", "Add old")
         self.base = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip()
 
-    def git(self, *args):
+    def git(self, *args: str) -> None:
         subprocess.run(["git", "-C", str(self.repo), *args], check=True, env={**os.environ, **GIT_IDENTITY})
 
-    def commit(self, name, text):
+    def commit(self, name: str, text: str) -> None:
         (self.repo / name).write_text(text)
         self.git("add", "-A")
         self.git("commit", "-q", "-m", f"Change {name}")
 
-    def test_error_on_a_new_line_blocks(self):
+    def test_error_on_a_new_line_blocks(self) -> None:
         self.commit("new.py", "def LoadThing() -> None:\n    pass\n")
         problems = gates.ruff_problems(str(self.repo), self.base)
         self.assertEqual(len(problems), 1)
         self.assertIn("new.py:1 N802", problems[0])
 
-    def test_old_error_in_a_changed_file_does_not_block(self):
+    def test_old_error_in_a_changed_file_does_not_block(self) -> None:
         self.commit("old.py", "import os\n\nSIZE = 1\n")
         self.assertEqual(gates.ruff_problems(str(self.repo), self.base), [])
 
-    def test_no_python_change_runs_nothing(self):
+    def test_no_python_change_runs_nothing(self) -> None:
         self.commit("notes.md", "hello\n")
         self.assertEqual(gates.ruff_problems(str(self.repo), self.base), [])
+
+    def test_git_failure_blocks_instead_of_passing(self) -> None:
+        problems = gates.ruff_problems(str(self.repo), "no-such-ref")
+        self.assertIn("git diff failed", problems[0])
 
 
 if __name__ == "__main__":
