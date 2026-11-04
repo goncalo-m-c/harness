@@ -75,7 +75,8 @@ A run goes like this:
 
 | Folder | What is inside |
 |---|---|
-| `engine/` | The MCP server, `pipeline.yaml`, `phases/`, the gates, tests and the Dockerfile. Start with [`engine/README.md`](engine/README.md). |
+| `docs/` | How the harness works, in short pages. Start with [`docs/README.md`](docs/README.md). |
+| `engine/` | The MCP server, `pipeline.yaml`, `phases/`, the gates, tests and the Dockerfile. For the engine details, see [`engine/README.md`](engine/README.md). |
 | `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review) |
 | `agents/` | The subagents: spec, implement, review, PR and CI, explore |
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
