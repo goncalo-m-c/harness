@@ -4,7 +4,7 @@ Connect the harness to Claude Code. Do the README install step 1 first (image an
 
 Set these in your shell. Use full paths.
 
-    HARNESS=~/Projects/harness      # this repo
+    HARNESS=~/Projects/harness/main # the main checkout of this repo (git-wt layout: <repo>/main)
     STORE=~/Projects/work-store     # runs and specs (README step 1)
     ROOT=~/Projects                 # the folder that holds your repos. The engine only sees this folder.
 
