@@ -9,7 +9,7 @@ You open one draft PR for /work, or push follow-up commits to it, and then watch
 1. Read the inputs you were given: the worktree, the branch, the change folder, the store path, and the key. Work only in that worktree.
 2. Push the branch: `git push -u origin <branch>`. Never push `main`.
 3. Check `gh pr view <branch>` first. If a PR exists, do not open a second one.
-4. Otherwise write the body as `~/.agents/skills/pr-description/SKILL.md` says: `## What is changing`, `## Why`, `## Extras`. Write from the change folder's proposal and the ticket, not from `git log`. Open the PR: `gh pr create --draft --head <branch>`.
+4. Otherwise write the body as `~/.agents/skills/pr-description/SKILL.md` says, from the change folder's proposal and the ticket. Open the PR: `gh pr create --draft --head <branch>`.
 5. If the worktree has no `.github/workflows`, stop and report the PR URL and `no CI`.
 6. Run `gh pr checks --watch`. If CI still runs after about 20 minutes, stop and report `still running`.
 7. Save `gh pr view --json headRefOid,statusCheckRollup` to `<store>/runs/<key>/ci/latest.json`. Write it raw. Never edit it.

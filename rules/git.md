@@ -7,7 +7,4 @@
 - Before committing to open PRs, run `git pull origin <default branch> --rebase`.
 - Branch names must contain the ticket ID (e.g. `abc-123-short-title`).
 - Never merge PRs yourself!
-- PR bodies: follow `~/.agents/skills/pr-description/SKILL.md`. Three sections ONLY, in order — no Test plan, Rollout, Merge order, or Summary unless the user asks.
-  1. `## What is changing` — behaviour after merge, a few sentences.
-  2. `## Why` — the problem and why now.
-  3. `## Extras` — bullets for caveats, links, follow-ups the diff does not show.
+- PR bodies: follow `~/.agents/skills/pr-description/SKILL.md`.
