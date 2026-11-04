@@ -31,6 +31,13 @@ If a path already exists as a real folder, `ln` would put the link inside it. Ch
       ln -sfn "$f" ~/.claude/agents/$(basename "$f")
     done
 
+Link the global ruff config. Ruff uses it in repos that have no ruff config of their own.
+Agents run ruff in Docker, and the image reads this file.
+
+    mkdir -p ~/.config/ruff
+    ln -sfn "$HARNESS/settings/ruff.toml" ~/.config/ruff/ruff.toml
+    docker pull ghcr.io/astral-sh/ruff:0.17.1
+
 ## 3. Add the permission rules
 
 Copy the `deny` and `ask` lists from `settings/permissions.example.json` into `~/.claude/settings.json`, under `permissions`.

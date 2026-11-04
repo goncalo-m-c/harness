@@ -79,7 +79,7 @@ A run goes like this:
 | `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review) |
 | `agents/` | The subagents: spec, implement, review, PR and CI, explore |
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
-| `settings/` | Permission rules for Claude Code. See [`settings/README.md`](settings/README.md). |
+| `settings/` | Permission rules for Claude Code (see [`settings/README.md`](settings/README.md)), and a global ruff config |
 | `hooks/` | `block-host-python.sh`: a Claude Code hook that keeps Python inside Docker |
 | `scripts/` | `open-spec-tab.sh`: opens a spec in a new terminal tab |
 | `clients/` | One install note per tool. Only [`clients/claude.md`](clients/claude.md) for now. |
