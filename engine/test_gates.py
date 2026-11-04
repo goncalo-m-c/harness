@@ -1,4 +1,4 @@
-"""Tests for the review and ruff gates. Run in Docker: python -m unittest test_gates -v"""
+"""Tests for the grill, review and ruff gates. Run in Docker: python -m unittest test_gates -v"""
 
 import os
 import subprocess
@@ -127,6 +127,33 @@ class RuffGateTest(unittest.TestCase):
     def test_git_failure_blocks_instead_of_passing(self) -> None:
         problems = gates.ruff_problems(str(self.repo), "no-such-ref")
         self.assertIn("git diff failed", problems[0])
+
+
+class GrillGateTest(unittest.TestCase):
+    def setUp(self):
+        self.repo = Path(tempfile.mkdtemp())
+        (self.repo / ".bare").mkdir()
+        self.state = {"key": "G-1", "slug": "net-worth-split", "repo": str(self.repo)}
+        decisions = STORE / "runs" / "G-1" / "decisions.md"
+        decisions.parent.mkdir(parents=True, exist_ok=True)
+        decisions.write_text("- 2026-11-04: split by owner\n")
+
+    def test_passes_with_decisions_slug_and_git_wt_repo(self):
+        self.assertEqual(gates.grill_done(self.state), (True, []))
+
+    def test_missing_slug_blocks(self):
+        ok, reasons = gates.grill_done({**self.state, "slug": ""})
+        self.assertFalse(ok)
+        self.assertIn("no slug", reasons[0])
+
+    def test_slug_with_spaces_or_capitals_blocks(self):
+        self.assertFalse(gates.grill_done({**self.state, "slug": "Net worth"})[0])
+
+    def test_repo_without_bare_blocks(self):
+        for repo in ("", tempfile.mkdtemp()):
+            ok, reasons = gates.grill_done({**self.state, "repo": repo})
+            self.assertFalse(ok)
+            self.assertIn("not a git-wt repo", reasons[0])
 
 
 if __name__ == "__main__":

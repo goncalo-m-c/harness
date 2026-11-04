@@ -12,6 +12,7 @@ from state import (
     advance,
     known_prefixes,
     latest_checkpoint,
+    name_run,
     next_key,
     phase_spec,
     record,
@@ -69,9 +70,10 @@ def work_next(key: str) -> str:
 
 
 @mcp.tool()
-def work_complete(key: str, evidence: str = "") -> str:
+def work_complete(key: str, evidence: str = "", slug: str = "", repo: str = "") -> str:
     """Run the gate of the current phase. On pass, advance or wait for approval.
-    EVIDENCE is the grill decisions (the engine writes the file), or the PR URL. Review needs none."""
+    In grill, EVIDENCE is the decisions (the engine writes the file), SLUG names the branch
+    and REPO is the git-wt repo for the code. In pr, EVIDENCE is the PR URL. Review needs none."""
     state = run_state(key)
     if state["status"] != "in_progress":
         record(state, "complete_refused", f"status is {state['status']}")
@@ -79,6 +81,8 @@ def work_complete(key: str, evidence: str = "") -> str:
     spec = phase_spec(state["phase"])
     if state["phase"] in EVIDENCE_PHASES and evidence.strip():
         write_run_file(state, "decisions.md", evidence)
+    if state["phase"] == "grill" and slug and repo:
+        name_run(state, slug, repo)
     ok, reasons = GATES[spec["gate"]](state)
     if not ok:
         record(state, "gate_failed", "; ".join(reasons)[:300])

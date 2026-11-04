@@ -7,15 +7,21 @@ from pathlib import Path
 from state import STORE, phase_spec, run_dir
 
 CI_PASS = {"SUCCESS", "SKIPPED", "NEUTRAL"}
+SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 FINDING = re.compile(r"^\s*[-*]\s*(hard|soft)\b", re.I | re.M)  # one finding per line in a review report
 HUNK = re.compile(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@")  # one hunk header of `git diff -U0`
 RUFF_CONFIG_HOME = Path(__file__).parent.parent / "settings"  # holds ruff/ruff.toml, the global config
 
 
-def decisions_written(state):
+def grill_done(state):
+    """Grill ends with the decisions written and the run named: a slug and a git-wt repo."""
     path = run_dir(state["key"]) / "decisions.md"
-    ok = path.exists() and path.read_text().strip() != ""
-    return ok, [] if ok else [f"{path} is missing or blank"]
+    reasons = [] if path.exists() and path.read_text().strip() else [f"{path} is missing or blank"]
+    if not SLUG.fullmatch(state["slug"]):
+        reasons.append("no slug: pass slug to work_complete, lowercase words joined by -, like net-worth-split")
+    if not state["repo"] or not (Path(state["repo"]) / ".bare").is_dir():
+        reasons.append(f"repo {state['repo']!r} is not a git-wt repo (no .bare): ask the user where the code lives")
+    return not reasons, reasons
 
 
 def openspec_valid(state):
@@ -148,7 +154,7 @@ def shell(cmd, cwd):
 
 
 GATES = {
-    "decisions_written": decisions_written,
+    "grill_done": grill_done,
     "openspec_valid": openspec_valid,
     "committed_and_tasks_done": committed_and_tasks_done,
     "review_passed": review_passed,

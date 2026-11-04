@@ -12,7 +12,7 @@ phases:
     agent: main
     instructions: phases/grill.md
     rules: [communication, subagents]
-    gate: decisions_written          # runs/<key>/decisions.md is non-empty
+    gate: grill_done                 # runs/<key>/decisions.md is non-empty, slug is set, repo has .bare
   - name: spec
     agent: work-spec-writer
     tier: standard

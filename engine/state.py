@@ -79,6 +79,12 @@ def log_task(state, kind, request):
         f.write(f"- {now()} [{state['phase']}] {kind}: {request}\n")
 
 
+def name_run(state, slug, repo):
+    """Grill knows the work at its end, so it names the run. Branch and worktree follow."""
+    branch = f"{state['key'].lower()}-{slug}"
+    state |= dict(slug=slug, change=slug, branch=branch, repo=repo, worktree=f"{repo}/{branch}")
+
+
 def write_run_file(state, name, text):
     """The main window passes the text (grill decisions, a checkpoint); the engine writes the file."""
     path = run_dir(state["key"]) / name
