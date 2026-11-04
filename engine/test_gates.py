@@ -6,10 +6,11 @@ import tempfile
 import unittest
 from pathlib import Path
 
-STORE = Path(tempfile.mkdtemp())
-os.environ["WORK_STORE"] = str(STORE)
+os.environ.setdefault("WORK_STORE", tempfile.mkdtemp())  # one store for all test files
 
 import gates  # noqa: E402  (needs WORK_STORE set first)
+
+STORE = gates.STORE
 
 GIT_IDENTITY = {"GIT_AUTHOR_NAME": "t", "GIT_AUTHOR_EMAIL": "t@t", "GIT_COMMITTER_NAME": "t", "GIT_COMMITTER_EMAIL": "t@t"}
 

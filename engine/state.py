@@ -1,4 +1,4 @@
-import json, os
+import json, os, re
 from datetime import datetime
 from pathlib import Path
 
@@ -9,10 +9,28 @@ STORE = Path(os.environ["WORK_STORE"])
 PIPELINE = yaml.safe_load((HERE / "pipeline.yaml").read_text())
 PHASES = PIPELINE["phases"]
 EVIDENCE_PHASES = ("grill",)  # phases where work_complete(evidence) carries the file body
+KEY = re.compile(r"([A-Z][A-Z0-9]*)-(\d+)")  # PREFIX-NUMBER, like MONEY-2
 
 
 def run_dir(key):
     return STORE / "runs" / key
+
+
+def next_key(prefix):
+    """The next free key for PREFIX: MONEY-3 when MONEY-1 and MONEY-2 exist."""
+    numbers = [int(m[2]) for m in run_keys() if m[1] == prefix]
+    return f"{prefix}-{max(numbers, default=0) + 1}"
+
+
+def known_prefixes():
+    """{prefix: repo} of the existing runs, so new work can reuse its project's prefix."""
+    return {m[1]: run_state(m[0]).get("repo", "") for m in sorted(run_keys(), key=lambda m: int(m[2]))}
+
+
+def run_keys():
+    runs = STORE / "runs"
+    names = [d.name for d in runs.iterdir() if (d / "state.json").exists()] if runs.is_dir() else []
+    return [m for name in names if (m := KEY.fullmatch(name))]
 
 
 def run_state(key):
