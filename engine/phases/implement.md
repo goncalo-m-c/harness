@@ -12,7 +12,9 @@ You are `work-implementer`. Work only in `{worktree}` (branch `{branch}`).
 **Main does:**
 1. Check that `{worktree}` exists. If not, create it with `git-wt` (see `~/.agents/skills/git-wt/SKILL.md`).
 2. Read the report. If it says `blocked`, tell the user.
-3. Call `work_complete`.
+3. Open the commits for the user with the `hunk-review-worktrees` skill, for `{worktree}`.
+4. Ask the user if they want changes before the review. Send each change with `work_task` (kind `edit`).
+5. When the user says go, call `work_complete`.
 **Write:** commits in `{worktree}`. Ticked boxes in `{store}/openspec/changes/{change}/tasks.md`.
 **Gate:** `committed_and_tasks_done`. At least one commit ahead of `origin/main`. Clean tree. No `- [ ]` in tasks.md.
 **Never:**
