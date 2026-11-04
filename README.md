@@ -77,7 +77,7 @@ A run goes like this:
 |---|---|
 | `docs/` | How the harness works, in short pages. Start with [`docs/README.md`](docs/README.md). |
 | `engine/` | The MCP server, `pipeline.yaml`, `phases/`, the gates, tests and the Dockerfile. For the engine details, see [`engine/README.md`](engine/README.md). |
-| `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review) |
+| `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review), `pr-description` (the PR text) |
 | `agents/` | The subagents: spec, implement, review, PR and CI, explore |
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
 | `settings/` | Permission rules for Claude Code (see [`settings/README.md`](settings/README.md)), and a global ruff config |
@@ -118,4 +118,5 @@ This is a personal proof of concept. I use it for my own work.
 
 ## Skills this repo expects but does not contain
 
-`grilling`, `pr-description`, `git-wt` and `code-review`. The phases and agents point to them by name.
+`grilling` and `code-review`. The phases and agents point to them by name.
+`git-wt` installs its own skill: see [`clients/claude.md`](clients/claude.md). See also [`docs/2-first-run.md`](docs/2-first-run.md).

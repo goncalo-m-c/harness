@@ -22,14 +22,24 @@ The phase text points to `~/.agents/skills`, so the skills go there first. Claud
 If a path already exists as a real folder, `ln` would put the link inside it. Check with `ls -ld` first.
 `hunk-review-worktrees` needs `hunk`, `herdr` and `jq`. To add only this skill, run `/link-hunk-review` in this repo.
 
+Install `git-wt` and its skill. The implement phase uses them to create the worktree.
+`git wt agent-skill` writes `~/.agents/skills/git-wt/SKILL.md`.
+
+    brew tap ahmedelgabri/git-wt
+    brew install git-wt
+    git wt agent-skill
+
+Then link all skills:
+
     mkdir -p ~/.agents/skills ~/.claude/skills ~/.claude/agents
-    for s in work review-rules hunk-review-worktrees; do
+    for s in work review-rules hunk-review-worktrees pr-description; do
       ln -sfn "$HARNESS/skills/$s" ~/.agents/skills/$s
       ln -sfn ~/.agents/skills/$s ~/.claude/skills/$s
     done
     for f in "$HARNESS"/agents/work-*.md; do
       ln -sfn "$f" ~/.claude/agents/$(basename "$f")
     done
+    ln -sfn ~/.agents/skills/git-wt ~/.claude/skills/git-wt
 
 Link the global ruff config. Ruff uses it in repos that have no ruff config of their own.
 Agents run ruff in Docker, and the image reads this file.

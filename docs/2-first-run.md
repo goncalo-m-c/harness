@@ -6,6 +6,7 @@
 - **Docker.** The engine, openspec and ruff run in Docker.
 - **`gh`**, logged in to GitHub. The PR phase uses it.
 - **A repo in the git-wt layout**: the `main` branch sits in `<repo>/main`, and each branch gets its own worktree folder next to it.
+- **`git-wt`**, the tool for that layout. Install it with brew: `brew tap ahmedelgabri/git-wt`, then `brew install git-wt`.
 - **One parent folder, `ROOT`,** that holds your repos, the harness and the store. The engine runs in Docker and sees only this folder.
 - **Optional:** three terminal tools that open things in a new tab. Without them, the agent prints the paths instead.
   - `herdr` manages the terminal tabs.
@@ -15,14 +16,15 @@
 
 ## Skills from outside this repo
 
-The phases call four skills that this repo does not contain. Install them before your first run.
+The phases call two skills that this repo does not contain. Install them before your first run.
 
 | Skill | What the harness uses it for | Where the harness looks for it |
 |---|---|---|
 | `grilling` | the question rounds in the grill phase | by name, as a Claude Code skill |
-| `git-wt` | how to create the worktree | `~/.agents/skills/git-wt/SKILL.md`. The `git-wt` tool can install a skill with `git-wt agent-skill`. Check where it puts it. |
-| `pr-description` | the three sections of the PR text | `~/.agents/skills/pr-description/SKILL.md` |
 | `code-review` | the two review sides: spec and standards | `~/Projects/.agents/skills/code-review/SKILL.md` |
+
+Two more skills come with the install. The `git-wt` tool writes its own skill with `git wt agent-skill`.
+`pr-description`, the three sections of the PR text, is in this repo.
 
 ## Install
 
