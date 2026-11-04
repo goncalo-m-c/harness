@@ -35,7 +35,7 @@ Link the global ruff config. Ruff uses it in repos that have no ruff config of t
 Agents run ruff in Docker, and the image reads this file.
 
     mkdir -p ~/.config/ruff
-    ln -sfn "$HARNESS/settings/ruff.toml" ~/.config/ruff/ruff.toml
+    ln -sfn "$HARNESS/settings/ruff/ruff.toml" ~/.config/ruff/ruff.toml
     docker pull ghcr.io/astral-sh/ruff:0.17.1
 
 Link the language rules. Claude Code loads a rule file when an agent reads or edits a matching file,

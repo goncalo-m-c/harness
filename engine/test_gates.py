@@ -1,4 +1,4 @@
-"""Tests for the review gate. Run in Docker: python -m unittest test_gates -v"""
+"""Tests for the review and ruff gates. Run in Docker: python -m unittest test_gates -v"""
 
 import os
 import subprocess
@@ -87,6 +87,40 @@ class ReviewGateTest(unittest.TestCase):
         ok, reasons = gates.review_passed({"key": "T-1", "worktree": "/does/not/exist"})
         self.assertFalse(ok)
         self.assertIn("does not exist", reasons[0])
+
+
+class RuffGateTest(unittest.TestCase):
+    """Ruff errors count only on lines the branch added. Needs ruff, as in the engine image."""
+
+    def setUp(self):
+        self.repo = Path(tempfile.mkdtemp())
+        self.git("init", "-q")
+        (self.repo / "old.py").write_text("import os\n")  # an old error: unused import
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", "Add old")
+        self.base = subprocess.check_output(["git", "-C", str(self.repo), "rev-parse", "HEAD"], text=True).strip()
+
+    def git(self, *args):
+        subprocess.run(["git", "-C", str(self.repo), *args], check=True, env={**os.environ, **GIT_IDENTITY})
+
+    def commit(self, name, text):
+        (self.repo / name).write_text(text)
+        self.git("add", "-A")
+        self.git("commit", "-q", "-m", f"Change {name}")
+
+    def test_error_on_a_new_line_blocks(self):
+        self.commit("new.py", "def LoadThing() -> None:\n    pass\n")
+        problems = gates.ruff_problems(str(self.repo), self.base)
+        self.assertEqual(len(problems), 1)
+        self.assertIn("new.py:1 N802", problems[0])
+
+    def test_old_error_in_a_changed_file_does_not_block(self):
+        self.commit("old.py", "import os\n\nSIZE = 1\n")
+        self.assertEqual(gates.ruff_problems(str(self.repo), self.base), [])
+
+    def test_no_python_change_runs_nothing(self):
+        self.commit("notes.md", "hello\n")
+        self.assertEqual(gates.ruff_problems(str(self.repo), self.base), [])
 
 
 if __name__ == "__main__":
