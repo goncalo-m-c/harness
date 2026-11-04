@@ -27,7 +27,7 @@ Most changes touch two or three files. What each change needs before it works:
    - `**Main does:**` is the steps for the chat agent.
    - `**Write:**` starts the rest of the page.
 
-   These placeholders are filled in for each run: `{key}`, `{change}`, `{worktree}`, `{branch}`, `{store}`, `{harness}`.
+   The engine fills in these placeholders for each run: `{key}`, `{change}`, `{worktree}`, `{branch}`, `{store}`, `{harness}`.
 
 3. **Add the agent** as `agents/work-docs-writer.md`, and link it into `~/.claude/agents/`.
 

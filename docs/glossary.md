@@ -2,7 +2,7 @@
 
 **Approval.** Your yes at the end of the spec phase and the review phase. Only you can give it.
 
-**Chat agent.** The agent you talk to in Claude Code. It talks with you and hands the heavy work to subagents. Also called the main window.
+**Chat agent.** The agent you talk to in Claude Code. It talks with you and is told to hand the heavy work to subagents. Also called the main window.
 
 **Change.** One OpenSpec change: the proposal, design, specs and tasks for one ticket. It lives in `openspec/changes/<slug>/` in the store.
 
@@ -38,4 +38,4 @@
 
 **Tier.** The strength of a subagent's model: fast, standard or strong. Each tool turns a tier into a model name.
 
-**Worktree.** A separate folder for one branch of a repo. The implementer works only there.
+**Worktree.** A separate folder for one branch of a repo, next to its `main` folder. The implementer is told to work only there.

@@ -5,10 +5,24 @@
 - **Claude Code.** It is the only tool with install notes now.
 - **Docker.** The engine, openspec and ruff run in Docker.
 - **`gh`**, logged in to GitHub. The PR phase uses it.
-- **A repo in the git-wt layout**: the `main` branch sits in `<repo>/main`, and each branch gets its own folder next to it.
-- **Optional:** `herdr`, `hunk`, `glow` and `jq`. They open the spec and the code in a new terminal tab.
-  Without them, the agent prints the paths instead.
-- **Skills from outside this repo:** `grilling`, `pr-description`, `git-wt`, `code-review`. The phases call them by name.
+- **A repo in the git-wt layout**: the `main` branch sits in `<repo>/main`, and each branch gets its own worktree folder next to it.
+- **One parent folder, `ROOT`,** that holds your repos, the harness and the store. The engine runs in Docker and sees only this folder.
+- **Optional:** three terminal tools that open things in a new tab. Without them, the agent prints the paths instead.
+  - `herdr` manages the terminal tabs.
+  - `glow` shows the spec as formatted text.
+  - `hunk` shows the commits and their diffs.
+  - They also need `jq`.
+
+## Skills from outside this repo
+
+The phases call four skills that this repo does not contain. Install them before your first run.
+
+| Skill | What the harness uses it for | Where the harness looks for it |
+|---|---|---|
+| `grilling` | the question rounds in the grill phase | by name, as a Claude Code skill |
+| `git-wt` | how to create the worktree | `~/.agents/skills/git-wt/SKILL.md`. The `git-wt` tool can install a skill with `git-wt agent-skill`. Check where it puts it. |
+| `pr-description` | the three sections of the PR text | `~/.agents/skills/pr-description/SKILL.md` |
+| `code-review` | the two review sides: spec and standards | `~/Projects/.agents/skills/code-review/SKILL.md` |
 
 ## Install
 
@@ -38,24 +52,24 @@ At the end it shows you the list of decisions. When you confirm, the engine save
 **3. Spec.** A subagent turns the decisions into a spec: a proposal, a design and a task list.
 The spec opens in a new tab. Read it. If it is right, say yes. Claude Code then asks you to allow `work_approve`.
 
-**4. Implement.** A subagent writes the code in a new branch folder, `~/Projects/my-repo/abc-123-add-login`.
-It commits each step. Then the commits open in hunk, in a new tab.
+**4. Implement.** The agent creates the worktree `~/Projects/my-repo/abc-123-add-login`.
+A subagent writes the code there and commits each step. Then the commits open in hunk, in a new tab.
 Ask for changes now, before the review. When you are happy, say go.
 
 **5. Review.** Two subagents review the code: one against the spec, one against the code rules.
 A finding marked `hard` must be fixed. The agent sends those fixes to the implementer and runs the reviewers again.
 When both reviews are clean, press `r` in the hunk tab to see the new commits.
-Then approve the push.
+Then approve the push. Claude Code still asks you once more when the push happens.
 
 **6. PR and CI.** A subagent pushes the branch, opens a draft PR and waits for the CI checks.
 If a check fails, the agent shows you the cause and asks before it fixes and pushes again.
+If CI takes longer than about 20 minutes, the agent tells you, and you ask it to wait again later.
 When CI is green, the run is done.
 
-The agent never merges the PR and never marks it ready. You do that yourself.
+The agent is told never to merge the PR or mark it ready. Permission rules also block both. You do that yourself.
 
 ## If you stop halfway
 
-Run `/work ABC-123`. The engine knows the phase, and it shows the latest checkpoint.
-See [Daily use](4-daily-use.md) for checkpoints.
+Run `/work ABC-123`. See [Daily use](4-daily-use.md#resuming-a-run).
 
 Next: [Phases](3-phases.md).

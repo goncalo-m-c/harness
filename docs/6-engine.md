@@ -40,25 +40,27 @@ work-store/
     reviews/standards.md  the standards review                 (the reviewer writes it)
     ci/latest.json    the raw CI result                        (work-pr writes it)
   openspec/changes/<slug>/
-    proposal.md, design.md, tasks.md, specs/                   (the spec writer writes them)
+    proposal.md, design.md, tasks.md, specs/                   (the spec writer writes them;
+                                                               the implementer ticks tasks.md)
 ```
 
-The chat agent writes nothing in the store. It passes text to the engine, and the engine writes the file.
+The chat agent is told to write nothing in the store. It passes text to the engine, and the engine writes the file.
+A permission rule protects only `state.json`. See [Safety](7-safety.md).
 
 ## The state
 
 `state.json` holds the phase and the status. The status is one of `in_progress`, `awaiting_approval` or `done`.
 It also holds a `history` list: one line for each event, with a time.
 
-## Skip attempts
+## Refusals
 
-When an agent tries to skip a step, the engine refuses and writes it to `history`:
+When the engine says no, it writes a line to `history`:
 
-- `gate_failed`: the gate did not pass.
+- `gate_failed`: the gate did not pass. This is often normal, for example a review with `hard` findings.
 - `complete_refused`: the agent tried to finish while an approval was waiting, or after the run was done.
 - `approve_refused`: an approval was called, but nothing was waiting.
 
-Count them for one run:
+Many refusals of the other two kinds mean an agent tries to skip steps. Count all refusals for one run:
 
     jq '[.history[] | select(.event | test("failed|refused"))] | length' runs/<KEY>/state.json
 

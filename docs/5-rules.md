@@ -12,8 +12,8 @@ The engine pastes their text into the instructions for that phase.
 | File | What it says | Pasted into |
 |---|---|---|
 | `code-style.md` | general code rules that fit every language | implement, and every extra edit |
-| `commands.md` | run python and similar tools only in Docker | implement, pr |
-| `git.md` | branches, commit messages, draft PRs | implement, pr |
+| `commands.md` | run python and similar tools only in Docker | implement, pr, and every extra edit |
+| `git.md` | branches, commit messages, draft PRs | implement, pr, and every extra edit |
 | `communication.md` | write in short, plain sentences | grill |
 | `subagents.md` | what the chat agent hands to subagents | grill |
 
@@ -26,9 +26,12 @@ paths:
 ---
 ```
 
-It is linked into `~/.claude/rules/`. Claude Code loads it when an agent reads a file that matches the list.
+You link it into `~/.claude/rules/`. Claude Code loads it when an agent reads a file that matches the list.
 This works in your chat and in subagents, inside a run or not.
 If no agent touches Python, the Python rules cost nothing.
+
+Today only `python.md` works this way. `bash.md` and `terraform.md` have no `paths:` list yet, and are not linked.
+So only the reviewer reads them. To change that, see [Adding a language](#adding-a-language).
 
 There is one gap. Claude Code does not load the rule when an agent *creates* a new file.
 So `code-style.md` tells the implementer to read its language's rule file before it writes code.
@@ -39,17 +42,18 @@ The implement gate and the review gate run ruff themselves. So an agent cannot s
 
 ## One rule list for the writer and the reviewer
 
-The implementer and the standards reviewer read the same language file.
+For Python, the implementer and the standards reviewer read the same file.
 So the code is written and checked against the same rules.
+The reviewer also reads [`common.md`](../skills/review-rules/rules/common.md): rules for every language. The implementer does not see that file.
 
 ## Only new code counts
 
 The ruff gate counts errors only on lines the branch added.
-Old code in a changed file does not block the gate, and agents leave it alone.
+Old code in a changed file does not block the gate. Agents are told to leave it alone.
 
 ## The ruff config
 
-The global config is [`settings/ruff/ruff.toml`](../settings/ruff/ruff.toml). It is linked to `~/.config/ruff/ruff.toml`.
+The global config is [`settings/ruff/ruff.toml`](../settings/ruff/ruff.toml). You link it to `~/.config/ruff/ruff.toml`.
 Ruff uses it only in repos with no ruff config of their own. A repo config always wins.
 
 ## Adding a rule
