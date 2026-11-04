@@ -6,6 +6,7 @@ couple of edits — implementing a feature, refactoring a module, writing a set 
 files — is dispatched rather than typed in the main window. Decide the approach
 with the user first, then hand the agreed plan to a subagent and report back what
 it did. Small, surgical edits made while discussing something are fine inline.
+**In a /work run, every edit goes through `work_task`, even a small one.** The rules for the edit travel in its prompt, and the change is committed in the worktree.
 
 Delegate the following to subagents to avoid polluting the main context:
 - **Web searches** — any task requiring web search or fetching external URLs. Return a synthesized answer, not raw results. If working with claude code use sonnet subagent for this.
