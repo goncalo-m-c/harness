@@ -38,6 +38,12 @@ Agents run ruff in Docker, and the image reads this file.
     ln -sfn "$HARNESS/settings/ruff.toml" ~/.config/ruff/ruff.toml
     docker pull ghcr.io/astral-sh/ruff:0.17.1
 
+Link the language rules. Claude Code loads a rule file when an agent reads or edits a matching file,
+in the main session and in subagents. The `paths:` list at the top of the file says which files match.
+
+    mkdir -p ~/.claude/rules
+    ln -sfn "$HARNESS/skills/review-rules/rules/python.md" ~/.claude/rules/python.md
+
 ## 3. Add the permission rules
 
 Copy the `deny` and `ask` lists from `settings/permissions.example.json` into `~/.claude/settings.json`, under `permissions`.

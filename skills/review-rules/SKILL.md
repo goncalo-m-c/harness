@@ -1,8 +1,9 @@
 ---
 name: review-rules
 description: >-
-  Language-specific PR review rules (Python call order, clean code, Bash, Terraform).
-  Load for Standards-axis review in /work, code-review, and /review.
+  Language rules (Python call order, naming, ruff; Bash; Terraform). Claude Code also loads
+  python.md by itself when an agent works on a .py file. Load for Standards-axis review in
+  /work, code-review, and /review.
 ---
 
 # Review rules
@@ -23,6 +24,6 @@ Repo documented standard > rules here > smell baseline (always judgement).
 ## Scope
 
 - Flag only code **added or moved** in the diff.
-- Skip rules already enforced by the repo’s `ruff` / `mypy` / `tflint` config.
+- Run the linter command a rule file names (like PY-RUFF). Report each linter error on an added or moved line once, under that rule. Do not report it again under another rule.
 - Findings: `[RULE-ID] path:line — what, fix`. Tag `hard` or `judgement` as in the rule file.
 - End with `hard N · judgement M`.
