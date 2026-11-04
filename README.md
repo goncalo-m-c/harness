@@ -3,7 +3,7 @@
 A workflow harness for AI coding agents. The agent does the work. A small engine decides when each step is done.
 
 ```
-grill → spec → [you approve] → implement → review → [you approve the push] → pr → ci
+grill → spec → [you approve] → implement → review → [you approve the push] → pr and ci
 ```
 
 ## Why do I use this
@@ -33,8 +33,7 @@ If the gate fails, the agent gets the reasons and must fix them.
 | spec | `work-spec-writer` | `openspec validate --strict` passes. Then **you approve**. |
 | implement | `work-implementer` | at least one commit ahead of `origin/main`, clean tree, every task ticked |
 | review | `work-reviewer-spec` and `work-reviewer-standards`, in parallel | both reports are newer than the last commit and have no `hard` finding. Then **you approve the push**. |
-| pr | `work-pr` | the remote branch is at the local `HEAD`. The PR is a draft. |
-| ci | `work-ci-watcher` | the saved CI result is for `HEAD` and every check passed |
+| pr | `work-pr`: pushes, opens a draft PR and waits for the checks | the remote branch is at the local `HEAD`. If the repo has CI, the saved CI result is for `HEAD` and every check passed. |
 
 The agent never merges and never marks a PR ready. That stays with you.
 
@@ -78,7 +77,7 @@ A run goes like this:
 |---|---|
 | `engine/` | The MCP server, `pipeline.yaml`, `phases/`, the gates, tests and the Dockerfile. Start with [`engine/README.md`](engine/README.md). |
 | `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review) |
-| `agents/` | The subagents: spec, implement, review, PR, CI and explore |
+| `agents/` | The subagents: spec, implement, review, PR and CI, explore |
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
 | `settings/` | Permission rules for Claude Code. See [`settings/README.md`](settings/README.md). |
 | `hooks/` | `block-host-python.sh`: a Claude Code hook that keeps Python inside Docker |
