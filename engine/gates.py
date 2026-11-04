@@ -1,4 +1,7 @@
-import json, os, re, subprocess
+import json
+import os
+import re
+import subprocess
 from pathlib import Path
 
 from state import STORE, phase_spec, run_dir
@@ -78,7 +81,7 @@ def ruff_problems(wt: str, base: str) -> list[str]:
         return []
     files = sorted({path for path, _ in added})
     env = os.environ | {"XDG_CONFIG_HOME": str(RUFF_CONFIG_HOME)}  # used only when the repo has no ruff config
-    p = subprocess.run(["ruff", "check", "--output-format", "json", *files], cwd=wt, capture_output=True, text=True, env=env)
+    p = subprocess.run(["ruff", "check", "--output-format", "json", *files], cwd=wt, capture_output=True, text=True, env=env, check=False)
     if p.returncode not in (0, 1):
         return [f"ruff could not run: {p.stderr.strip()[-300:]}"]
     errors = [(os.path.relpath(e["filename"], wt), e["location"]["row"], e) for e in json.loads(p.stdout)]
