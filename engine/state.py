@@ -16,6 +16,15 @@ def run_dir(key):
     return STORE / "runs" / key
 
 
+def start_problems(description, prefix, key):
+    problems = [] if description.strip() else ["description is empty: pass the user's words"]
+    if key and not KEY.fullmatch(key):
+        problems.append(f"key {key!r} is not PREFIX-NUMBER, like MONEY-2")
+    if not key and not re.fullmatch(r"[A-Z][A-Z0-9]*", prefix):
+        problems.append(f"prefix {prefix!r} is not capital letters, like SURE; or pass key")
+    return problems
+
+
 def next_key(prefix):
     """The next free key for PREFIX: MONEY-3 when MONEY-1 and MONEY-2 exist."""
     numbers = [int(m[2]) for m in run_keys() if m[1] == prefix]

@@ -42,5 +42,15 @@ class NextKeyTest(unittest.TestCase):
         self.assertEqual(state.known_prefixes(), {"SITE": "/site", "MONEY": "/money"})
 
 
+class StartProblemsTest(unittest.TestCase):
+    def test_a_description_and_a_prefix_or_key_start_a_run(self):
+        self.assertEqual(state.start_problems("split net worth", "SURE", ""), [])
+        self.assertEqual(state.start_problems("split net worth", "", "ABC-7"), [])
+
+    def test_bad_input_is_refused(self):
+        self.assertEqual(len(state.start_problems(" ", "sure", "")), 2)
+        self.assertEqual(len(state.start_problems("x", "", "abc7")), 1)
+
+
 if __name__ == "__main__":
     unittest.main()

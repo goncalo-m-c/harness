@@ -10,11 +10,14 @@ from state import (
     EVIDENCE_PHASES,
     PHASES,
     advance,
+    known_prefixes,
     latest_checkpoint,
+    next_key,
     phase_spec,
     record,
     run_dir,
     run_state,
+    start_problems,
     write_run_file,
 )
 
@@ -28,22 +31,25 @@ SAVE_CHECKPOINT = (
 
 
 @mcp.tool()
-def work_start(key: str, slug: str, repo: str, models: dict | None = None) -> str:
-    """Create a run for ticket KEY in REPO (git-wt layout) and return the grill instructions.
-    Without MODELS (agent -> model), create nothing and return the default table to confirm."""
-    if run_dir(key).exists():
+def work_start(description: str, prefix: str = "", key: str = "", models: dict | None = None) -> str:
+    """Create a run from the user's DESCRIPTION and return the grill instructions.
+    The key is KEY when the user gave one, else the next free number for PREFIX (like MONEY-2).
+    Grill sets the slug and the repo at its end.
+    Without MODELS (agent -> model), create nothing and return the models and prefixes to confirm."""
+    if key and run_dir(key).exists():
         return f"Run {key} already exists. Call work_next instead."
     if models is None:
-        return models_table()
-    problems = model_problems(models)
+        return models_table() + prefixes_table()
+    problems = model_problems(models) + start_problems(description, prefix, key)
     if problems:
-        return "Models refused, nothing created:\n- " + "\n- ".join(problems)
-    branch = f"{key.lower()}-{slug}"
-    state = dict(key=key, slug=slug, change=slug, branch=branch, repo=repo)
-    state |= dict(worktree=f"{repo}/{branch}", phase=PHASES[0]["name"], status="in_progress")
-    state |= dict(pr_url="", models=models, tasks_since_checkpoint=0, history=[])
+        return "Start refused, nothing created:\n- " + "\n- ".join(problems)
+    key = key or next_key(prefix)
+    state = dict(key=key, slug="", change="", branch="", repo="", worktree="")
+    state |= dict(phase=PHASES[0]["name"], status="in_progress", pr_url="", models=models)
+    state |= dict(tasks_since_checkpoint=0, history=[])
     record(state, "created")
-    return work_next(key)
+    write_run_file(state, "ticket.md", f"# {key}\n\n{description}")
+    return f"Created run {key}.\n\n" + work_next(key)
 
 
 @mcp.tool()
@@ -124,6 +130,15 @@ def work_checkpoint(key: str, summary: str) -> str:
     state["tasks_since_checkpoint"] = 0
     record(state, "checkpoint")
     return f"Checkpoint saved. To start fresh, the user runs /clear, then /work {key}."
+
+
+def prefixes_table():
+    rows = "\n".join(f"{p:<10}{repo or '(repo not set yet)'}" for p, repo in known_prefixes().items())
+    return (
+        "\n\nKey prefixes in use:\n\n" + (rows or "none yet") + "\n\n"
+        "Pick the prefix for this work with the user: one above, or a new one (capital letters, like SURE). "
+        "Pass it as prefix. If the user already has a key (from Jira, for example), pass key instead."
+    )
 
 
 if __name__ == "__main__":
