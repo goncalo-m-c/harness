@@ -6,7 +6,7 @@ The engine owns run state and gates. The chat agent owns the conversation.
  you <-> agent chat (/work KEY SLUG REPO)
               |  MCP over stdio (docker run -i)
               v
-   work_start | work_next | work_complete | work_approve | work_task  <- engine.py
+   work_start | work_next | work_complete | work_approve | work_task | work_checkpoint  <- engine.py
               |
      +--------+-----------------+
      v                          v
@@ -41,7 +41,7 @@ Do not auto-approve `work_approve`. The client must ask you each time.
 
 1. `pipeline.yaml`: the phases, gates and approvals.
 2. `phases/*.md`: what the agent does in each phase.
-3. `engine.py`: the 5 tools (the public contract).
+3. `engine.py`: the 6 tools (the public contract).
 4. `state.py`, `models.py`, `dispatch.py`, `gates.py`: what the tools call, in that order.
 
 ## Models
@@ -64,8 +64,15 @@ In a subagent phase the text goes inside the subagent prompt, because subagents 
 
 The main window writes nothing in the store. The `work` skill forbids it.
 `work_complete(key, evidence)` in `grill` writes `runs/<KEY>/decisions.md` from `evidence` (an empty `evidence` keeps an existing file).
+`work_checkpoint(key, summary)` writes `runs/<KEY>/checkpoint.md`. It replaces the previous one.
 Subagents write their own files: the spec, the review reports (`reviews/spec.md`, `reviews/standards.md`) and `ci/`.
 The review gate reads the two reports and counts the `- hard:` lines itself. A report must be newer than the last commit.
+
+## Checkpoints
+
+Long talks fill the context and make the results worse. A checkpoint lets you start a fresh session.
+The engine asks the main window to save one on every gate pass, and after every 5 `work_task` calls since the last one.
+You can also ask for one. Then run `/clear` and `/work KEY`. `work_next` shows the latest checkpoint to the new session.
 
 ## Skip attempts
 

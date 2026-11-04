@@ -52,11 +52,16 @@ def log_task(state, kind, request):
         f.write(f"- {now()} [{state['phase']}] {kind}: {request}\n")
 
 
-def write_evidence(state, text):
-    """The main window passes the grill decisions; the engine writes the file."""
-    path = run_dir(state["key"]) / "decisions.md"
+def write_run_file(state, name, text):
+    """The main window passes the text (grill decisions, a checkpoint); the engine writes the file."""
+    path = run_dir(state["key"]) / name
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text.strip() + "\n")
+
+
+def latest_checkpoint(state):
+    path = run_dir(state["key"]) / "checkpoint.md"
+    return path.read_text().strip() if path.exists() else ""
 
 
 def now():
