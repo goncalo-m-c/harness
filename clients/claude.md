@@ -20,7 +20,7 @@ Check it with `claude mcp get work`.
 
 The phase text points to `~/.agents/skills`, so the skills go there first. Claude Code links to them.
 If a path already exists as a real folder, `ln` would put the link inside it. Check with `ls -ld` first.
-`hunk-review-worktrees` needs `hunk`, `herdr` and `jq`. To add only this skill, run `/link-hunk-review` in this repo.
+`hunk-review-worktrees` needs `hunk`, the Herdr app and `jq`. To add only this skill, run `/link-hunk-review` in this repo.
 
 Install `git-wt` and its skill. The implement phase uses them to create the worktree.
 `git wt agent-skill` writes `~/.agents/skills/git-wt/SKILL.md`.
@@ -40,6 +40,12 @@ Then link all skills:
       ln -sfn "$f" ~/.claude/agents/$(basename "$f")
     done
     ln -sfn ~/.agents/skills/git-wt ~/.claude/skills/git-wt
+
+Link the `spec-viewer` mod into the Herdr app. The spec phase opens it beside the agent.
+Then check it: the app must print `Check passed`.
+
+    ln -sfn "$HARNESS/herdr-app/mods/spec-viewer" ~/.config/herdr-app/mods/spec-viewer
+    herdr-app check ~/.config/herdr-app/mods/spec-viewer
 
 Link the global ruff config. Ruff uses it in repos that have no ruff config of their own.
 Agents run ruff in Docker, and the image reads this file.

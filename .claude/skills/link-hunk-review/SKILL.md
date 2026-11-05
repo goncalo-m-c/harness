@@ -23,7 +23,7 @@ Show each command before you run it. Wait for the user's yes before you change a
 
 2. Check the tools the skill runs:
 
-       command -v hunk herdr jq
+       command -v hunk herdr-app jq
 
    If one is missing, name it to the user and keep going. The link still works, but the skill cannot open a review until the tool is installed.
 

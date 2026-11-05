@@ -33,7 +33,7 @@ The new chat gets the current phase and the latest checkpoint from the engine. I
 
 ## Reviewing the code yourself
 
-At the end of the implement phase, the commits open in hunk, in a new tab.
+At the end of the implement phase, the commits open in hunk, in a pane beside the agent.
 
 - **↑ ↓** move between commits. **Enter** opens a diff.
 - **q** goes back. **q** again closes hunk.

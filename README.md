@@ -83,14 +83,15 @@ A run goes like this:
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
 | `settings/` | Permission rules for Claude Code (see [`settings/README.md`](settings/README.md)), and a global ruff config |
 | `hooks/` | `block-host-python.sh`: a Claude Code hook that keeps Python inside Docker |
-| `scripts/` | `open-spec-tab.sh`: opens a spec in a new terminal tab |
+| `scripts/` | `open-spec-pane.sh`: opens a spec in a Herdr app pane beside the agent |
+| `herdr-app/` | `mods/spec-viewer`: the Herdr app pane that shows a spec as markdown |
 | `clients/` | One install note per tool. Only [`clients/claude.md`](clients/claude.md) for now. |
 | `.claude/` | `harness-setup` and `link-hunk-review`: skills that work before anything is installed |
 
 ## Install
 
 You need Docker, Claude Code, `git` and the GitHub CLI (`gh`), logged in.
-Optional: `herdr` and `glow` to open specs in a tab, and `hunk`, `herdr` and `jq` to open the code review in a tab.
+Optional: the Herdr app and `jq` to open specs in a pane, and `hunk` too to open the code review in a pane.
 
 Open Claude Code in this folder and run `/harness-setup`, or follow the steps yourself.
 Set `STORE` to the folder where runs and specs will live.
