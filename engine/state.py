@@ -69,7 +69,11 @@ def record(state, event, detail=""):
     if detail:
         entry["detail"] = detail
     state["history"].append(entry)
+    base_real = os.path.realpath(STORE / "runs")
     path = run_dir(state["key"]) / "state.json"
+    target_real = os.path.realpath(path)
+    if os.path.commonpath([base_real, target_real]) != base_real:
+        raise Exception("Invalid file path")
     path.parent.mkdir(parents=True, exist_ok=True)
     tmp = path.with_suffix(".tmp")
     tmp.write_text(json.dumps(state, indent=2))
@@ -77,7 +81,12 @@ def record(state, event, detail=""):
 
 
 def log_task(state, kind, request):
-    with open(run_dir(state["key"]) / "tasks.md", "a") as f:
+    base_real = os.path.realpath(STORE / "runs")
+    path = run_dir(state["key"]) / "tasks.md"
+    target_real = os.path.realpath(path)
+    if os.path.commonpath([base_real, target_real]) != base_real:
+        raise Exception("Invalid file path")
+    with open(path, "a") as f:
         f.write(f"- {now()} [{state['phase']}] {kind}: {request}\n")
 
 
@@ -89,7 +98,11 @@ def name_run(state: dict, slug: str, repo: str) -> None:
 
 def write_run_file(state, name, text):
     """The main window passes the text (grill decisions, a checkpoint); the engine writes the file."""
+    base_real = os.path.realpath(STORE / "runs")
     path = run_dir(state["key"]) / name
+    target_real = os.path.realpath(path)
+    if os.path.commonpath([base_real, target_real]) != base_real:
+        raise Exception("Invalid file path")
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text.strip() + "\n")
 
