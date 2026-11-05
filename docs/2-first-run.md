@@ -8,9 +8,8 @@
 - **A repo in the git-wt layout**: the `main` branch sits in `<repo>/main`, and each branch gets its own worktree folder next to it.
 - **`git-wt`**, the tool for that layout. Install it with brew: `brew tap ahmedelgabri/git-wt`, then `brew install git-wt`.
 - **One parent folder, `ROOT`,** that holds your repos, the harness and the store. The engine runs in Docker and sees only this folder.
-- **Optional:** three terminal tools that open things in a new tab. Without them, the agent prints the paths instead.
-  - `herdr` manages the terminal tabs.
-  - `glow` shows the spec as formatted text.
+- **Optional:** tools that open things in a pane beside the agent. Without them, or when the agent does not run in the Herdr app, the agent prints the paths instead.
+  - The Herdr app holds the panes. Its `spec-viewer` mod shows the spec as markdown.
   - `hunk` shows the commits and their diffs.
   - They also need `jq`.
 
@@ -55,15 +54,15 @@ At the end it shows you the list of decisions. You also agree on a short name (t
 When you confirm, the engine saves the decisions and names the branch `abc-1-add-login`.
 
 **3. Spec.** A subagent turns the decisions into a spec: a proposal, a design and a task list.
-The spec opens in a new tab. Read it. If it is right, say yes. Claude Code then asks you to allow `work_approve`.
+The spec opens in a pane beside the agent. Read it. If it is right, say yes. Claude Code then asks you to allow `work_approve`.
 
 **4. Implement.** The agent creates the worktree `~/Projects/my-repo/abc-1-add-login`.
-A subagent writes the code there and commits each step. Then the commits open in hunk, in a new tab.
+A subagent writes the code there and commits each step. Then the commits open in hunk, in a pane beside the agent.
 Ask for changes now, before the review. When you are happy, say go.
 
 **5. Review.** Two subagents review the code: one against the spec, one against the code rules.
 A finding marked `hard` must be fixed. The agent sends those fixes to the implementer and runs the reviewers again.
-When both reviews are clean, press `r` in the hunk tab to see the new commits.
+When both reviews are clean, press `r` in the hunk pane to see the new commits.
 Then approve the push. Claude Code still asks you once more when the push happens.
 
 **6. PR and CI.** A subagent pushes the branch, opens a draft PR and waits for the CI checks.
