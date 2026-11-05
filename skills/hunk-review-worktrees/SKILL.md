@@ -1,13 +1,13 @@
 ---
 name: hunk-review-worktrees
-description: Open a git worktree's commits and diffs in a new herdr tab using hunk, one tab per worktree. Use when the user asks to see, review, or diff what an agent or branch produced in a worktree, or asks which worktrees have new work.
+description: Open a git worktree's commits and diffs in a Herdr app pane beside the agent using hunk, one pane per worktree. Use when the user asks to see, review, or diff what an agent or branch produced in a worktree, or asks which worktrees have new work.
 ---
 
 # Review worktrees
 
 Show the user what each parallel git worktree added, and open each one for
-reading in its own new tab. Two tools do the work: **herdr** holds the tab,
-**hunk** renders the commits and diffs.
+reading in its own pane beside the agent. Two tools do the work: the
+**Herdr app** (`herdr-app`) holds the pane, **hunk** renders the commits and diffs.
 
 ## When to use this
 
@@ -18,9 +18,9 @@ reading in its own new tab. Two tools do the work: **herdr** holds the tab,
 ## The one constraint that shapes everything
 
 `hunk log` has **no `--repo`, `-C` or `--cwd` flag**. It resolves the repository
-from its own process directory. So you aim it by opening the tab *in* the
-worktree, with `herdr tab create --cwd`. Never try to pass the repo as an
-argument — there is no such argument.
+from its own process directory. `pane.split` takes a command but no folder,
+so the pane runs `sh -c 'cd <worktree> && exec hunk log <range>'`. Never try to
+pass the repo to hunk as an argument — there is no such argument.
 
 ## Step 1 — find the worktrees
 
@@ -82,26 +82,34 @@ agent-docs    1 new   base:origin/master
 agent-idle    0 new   base:origin/master
 ```
 
-## Step 4 — open each one in a new tab
+## Step 4 — open each one in a pane
 
-Always open a **new tab**. Never split the user's current pane.
-If more than one worktree has new commits, open **one tab per worktree**.
+Split **your own pane** (the agent's) to the right. The app knows you by your
+terminal, `$HC_TERMINAL_ID`; find its pane with `herdr-app ls`. If
+`HC_TERMINAL_ID` is not set, you are not in the Herdr app: do not split
+anything, and tell the user to run `cd <worktree> && hunk log <base>..HEAD`
+themselves.
+
+If more than one worktree has new commits, open **one pane per worktree**.
 Skip worktrees with 0 new commits, but keep them in the summary.
-
-Run this for each worktree:
+The first pane goes to the right of yours. Each next one splits the previous
+review pane **down**, so the columns do not get too narrow.
 
 ```bash
-# A new tab whose directory is the worktree. This is what aims hunk.
-# (herdr prints JSON already; there is no --json flag.)
-CREATED=$(herdr tab create --cwd "$WORKTREE" --label "review-$(basename "$WORKTREE")")
-TAB=$(printf '%s' "$CREATED" | jq -r '.result.tab.tab_id')
-PANE=$(printf '%s' "$CREATED" | jq -r '.result.root_pane.pane_id')
+ME=$(herdr-app ls | jq -r --arg t "$HC_TERMINAL_ID" \
+  '.spaces[] | select(.machine == null) | .tabs[].terminals[] | select(.terminal == $t) | .pane')
+# hunk runs inside the worktree, on the new commits only.
+ARGV=$(jq -cn --arg wt "$WORKTREE" --arg range "$base..HEAD" \
+  '["sh", "-c", "cd \"$1\" && exec hunk log \"$2\"", "hunk", $wt, $range]')
 
-# Run the browser there, on the new commits only.
-herdr pane run "$PANE" "hunk log $base..HEAD"
+# The first worktree: right of your pane. Each next one: --direction down --pane "$PANE".
+CREATED=$(herdr-app do pane.split --direction right --pane "$ME" --argv "$ARGV")
+PANE=$(printf '%s' "$CREATED" | jq -r '.pane')
+# The new pane takes the keyboard; give it back to your pane.
+herdr-app do pane.focus --pane "$ME"
 ```
 
-Keep the `TAB` ids. Tell the user each tab's label, so they can find it.
+Keep the `PANE` ids. Tell the user which pane shows which worktree.
 
 Always pass the `$base..HEAD` range. Plain `hunk log` shows the whole repo
 history, and the new work gets lost in it. The range depends on the base from
@@ -114,18 +122,19 @@ They are about to get an interactive TUI. Say so, and name the keys:
 
 - **↑ ↓** move, **Enter** opens the selected commit's diff
 - **q** goes back from the diff to the commit list
-- **q** again exits the browser
+- **q** again exits the browser and closes its pane
 - **r** refreshes — new commits do not appear on their own, there is no watch mode
 - **/** searches
 
-## Reusing and closing tabs
+## Reusing and closing panes
 
-Tabs add up. If you already opened a tab for a worktree in this session and it
-is still open, do not open a second one: tell the user to press **r** in it.
-Close the tabs you opened once the user is done reviewing:
+Panes add up and take space from the chat. If you already opened a pane for a
+worktree in this session and it is still open, do not open a second one: tell
+the user to press **r** in it. The pane closes itself when hunk exits. Close
+the ones still open once the user is done reviewing:
 
 ```bash
-herdr tab close "$TAB"
+herdr-app do pane.close --pane "$PANE"
 ```
 
 ## Gotchas
@@ -133,12 +142,12 @@ herdr tab close "$TAB"
 - **No watch mode.** `hunk log` has no `--watch`; that flag exists only on the
   review commands. If an agent commits while the browser is open, the user must
   press `r`.
-- **A tab needs a terminal.** `hunk log` is interactive. To read commits
+- **A pane needs a terminal.** `hunk log` is interactive. To read commits
   yourself instead of showing them, use `hunk log --static --oneline` or plain
-  `git log` — do not open a tab just to read output back.
+  `git log` — do not open a pane just to read output back.
 - **Paths with spaces** survive if you quote every variable and parse as above.
 - **`--cwd` needs a directory that exists.** A removed worktree still appears in
-  a stale listing, so check the path exists before creating the tab.
-- **Check herdr is there.** These commands need a running herdr server; without
-  one they return `server_not_running`. If the user is not in herdr, fall back to
-  telling them to run `cd <worktree> && hunk log` themselves.
+  a stale listing, so check the path exists before creating the pane.
+- **Check the Herdr app is there.** These commands need the app running; without
+  it, `herdr-app do` prints `{ "error": ... }` and exits 1. Then fall back to
+  telling the user to run `cd <worktree> && hunk log` themselves.
