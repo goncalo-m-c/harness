@@ -1,16 +1,27 @@
-import json, re, subprocess
+import json
+import os
+import re
+import subprocess
 from pathlib import Path
 
 from state import STORE, phase_spec, run_dir
 
 CI_PASS = {"SUCCESS", "SKIPPED", "NEUTRAL"}
+SLUG = re.compile(r"[a-z0-9]+(-[a-z0-9]+)*")
 FINDING = re.compile(r"^\s*[-*]\s*(hard|soft)\b", re.I | re.M)  # one finding per line in a review report
+HUNK = re.compile(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@")  # one hunk header of `git diff -U0`
+RUFF_CONFIG_HOME = Path(__file__).parent.parent / "settings"  # holds ruff/ruff.toml, the global config
 
 
-def decisions_written(state):
+def grill_done(state: dict) -> tuple[bool, list[str]]:
+    """Grill ends with the decisions written and the run named: a slug and a git-wt repo."""
     path = run_dir(state["key"]) / "decisions.md"
-    ok = path.exists() and path.read_text().strip() != ""
-    return ok, [] if ok else [f"{path} is missing or blank"]
+    reasons = [] if path.exists() and path.read_text().strip() else [f"{path} is missing or blank"]
+    if not SLUG.fullmatch(state["slug"]):
+        reasons.append("no slug: pass slug to work_complete, lowercase words joined by -, like net-worth-split")
+    if not state["repo"] or not (Path(state["repo"]) / ".bare").is_dir():
+        reasons.append(f"repo {state['repo']!r} is not a git-wt repo (no .bare): ask the user where the code lives")
+    return not reasons, reasons
 
 
 def openspec_valid(state):
@@ -24,8 +35,7 @@ def committed_and_tasks_done(state):
     wt = state["worktree"]
     if not Path(wt).is_dir():
         return False, [f"worktree {wt} does not exist"]
-    rc, head = shell(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], wt)
-    base = head if rc == 0 else "origin/main"
+    base = base_ref(wt)
     reasons = []
     _, ahead = shell(["git", "rev-list", "--count", f"{base}..HEAD"], wt)
     if not ahead.isdigit() or int(ahead) < 1:
@@ -35,6 +45,7 @@ def committed_and_tasks_done(state):
     tasks = STORE / "openspec" / "changes" / state["change"] / "tasks.md"
     if not tasks.exists() or "- [ ]" in tasks.read_text():
         reasons.append(f"{tasks} is missing or has unticked tasks")
+    reasons += ruff_problems(wt, base)
     return not reasons, reasons
 
 
@@ -49,6 +60,7 @@ def review_passed(state):
         axis = agent.removeprefix("work-reviewer-")
         report = run_dir(state["key"]) / "reviews" / f"{axis}.md"
         reasons += report_problems(agent, report, commit_time)
+    reasons += ruff_problems(wt, base_ref(wt))
     return not reasons, reasons
 
 
@@ -63,6 +75,40 @@ def report_problems(agent, report, commit_time):
         return [f"{agent}: report has no `- hard:` or `- soft:` lines and is not `No findings.`"]
     hard = kinds.count("hard")
     return [f"{agent}: {hard} hard finding(s) open in {report.name}"] if hard else []
+
+
+def ruff_problems(wt: str, base: str) -> list[str]:
+    """Ruff errors on Python lines the branch added. Old code in a changed file does not count."""
+    rc, diff = shell(["git", "diff", "-U0", "--diff-filter=d", f"{base}...HEAD", "--", "*.py", "*.pyi"], wt)
+    if rc != 0:
+        return [f"git diff failed, so ruff could not check: {diff[-300:]}"]
+    added = added_lines(diff)
+    if not added:
+        return []
+    files = sorted({path for path, _ in added})
+    env = os.environ | {"XDG_CONFIG_HOME": str(RUFF_CONFIG_HOME)}  # used only when the repo has no ruff config
+    p = subprocess.run(["ruff", "check", "--output-format", "json", *files], cwd=wt, capture_output=True, text=True, env=env, check=False)
+    if p.returncode not in (0, 1):
+        return [f"ruff could not run: {p.stderr.strip()[-300:]}"]
+    errors = [(os.path.relpath(e["filename"], wt), e["location"]["row"], e) for e in json.loads(p.stdout)]
+    return [f"ruff: {path}:{row} {e['code']} {e['message']}" for path, row, e in errors if (path, row) in added]
+
+
+def added_lines(diff: str) -> set[tuple[str, int]]:
+    """(path, line number) for every line a `git diff -U0` adds."""
+    added, path = set(), ""
+    for line in diff.splitlines():
+        if line.startswith("+++ b/"):
+            path = line.removeprefix("+++ b/")
+        elif hunk := HUNK.match(line):
+            start, count = int(hunk[1]), int(hunk[2] or 1)
+            added |= {(path, n) for n in range(start, start + count)}
+    return added
+
+
+def base_ref(wt: str) -> str:
+    rc, head = shell(["git", "symbolic-ref", "--short", "refs/remotes/origin/HEAD"], wt)
+    return head if rc == 0 else "origin/main"
 
 
 def branch_pushed(state):
@@ -108,7 +154,7 @@ def shell(cmd, cwd):
 
 
 GATES = {
-    "decisions_written": decisions_written,
+    "grill_done": grill_done,
     "openspec_valid": openspec_valid,
     "committed_and_tasks_done": committed_and_tasks_done,
     "review_passed": review_passed,

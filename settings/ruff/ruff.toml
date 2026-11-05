@@ -1,0 +1,11 @@
+# Global ruff config. Ruff uses it in any repo that has no ruff config of its own.
+# Each rule set below checks a rule in skills/review-rules/rules/python.md.
+[lint]
+extend-select = [
+  "N",    # snake_case and PascalCase names
+  "ANN",  # type annotations (PY-TYPES)
+  "PTH",  # pathlib, not os.path (PY-PATH)
+  "BLE",  # no blind `except Exception` (PY-ERR); bare `except:` is E722, on by default
+  "ERA",  # no commented-out code (CM-DEAD); unused imports are F401, on by default
+]
+ignore = ["ANN401"]  # allow typing.Any when it is the honest type

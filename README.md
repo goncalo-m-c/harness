@@ -40,7 +40,7 @@ The agent never merges and never marks a PR ready. That stays with you.
 ## How it works
 
 ```
- you <-> agent chat  (/work KEY SLUG REPO)
+ you <-> agent chat  (/work <description>)
             |  MCP over stdio (docker run -i)
             v
    engine:  work_start | work_next | work_complete | work_approve | work_task
@@ -49,17 +49,18 @@ The agent never merges and never marks a PR ready. That stays with you.
             +-- phases/*.md     what to do in each phase
             +-- gates.py        one function per gate
             v
-   <store>/runs/<KEY>/state.json  +  decisions.md, reviews/, ci/
+   <store>/runs/<KEY>/state.json  +  ticket.md, decisions.md, reviews/, ci/
 ```
 
 A run goes like this:
 
-1. You type `/work ABC-123 my-slug /path/to/repo`. The `work` skill tells the agent to call `work_start`.
-2. The engine shows a model for each subagent. You confirm or change them.
-3. `work_next` returns the instructions for the current phase. For a subagent phase, it returns a ready dispatch: the agent, the model and the full prompt.
-4. When the phase looks done, the agent calls `work_complete`. The engine runs the gate.
-5. If the gate passes, the run moves on. If it fails, the agent gets the reasons.
-6. Two phases wait for you. Only `work_approve` moves past them, and a permission rule makes that tool ask you each time.
+1. You describe the work: `/work split net worth between me and my partner`. The `work` skill tells the agent to call `work_start`.
+2. The engine shows a model for each subagent and the key prefixes in use. You confirm the models and pick a prefix. The engine picks the next key, like `MONEY-2`, and saves your words in `ticket.md`.
+3. Grill turns your words into decisions. At its end you agree on a slug and the repo, and the engine names the branch and the worktree.
+4. `work_next` returns the instructions for the current phase. For a subagent phase, it returns a ready dispatch: the agent, the model and the full prompt.
+5. When the phase looks done, the agent calls `work_complete`. The engine runs the gate.
+6. If the gate passes, the run moves on. If it fails, the agent gets the reasons.
+7. Two phases wait for you. Only `work_approve` moves past them, and a permission rule makes that tool ask you each time.
 
 ## Design choices
 
@@ -75,11 +76,12 @@ A run goes like this:
 
 | Folder | What is inside |
 |---|---|
-| `engine/` | The MCP server, `pipeline.yaml`, `phases/`, the gates, tests and the Dockerfile. Start with [`engine/README.md`](engine/README.md). |
-| `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review) |
+| `docs/` | How the harness works, in short pages. Start with [`docs/README.md`](docs/README.md). |
+| `engine/` | The MCP server, `pipeline.yaml`, `phases/`, the gates, tests and the Dockerfile. For the engine details, see [`engine/README.md`](engine/README.md). |
+| `skills/` | `work` (the entry skill), `review-rules` (language rules for the review), `hunk-review-worktrees` (opens the code for your review), `pr-description` (the PR text) |
 | `agents/` | The subagents: spec, implement, review, PR and CI, explore |
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
-| `settings/` | Permission rules for Claude Code. See [`settings/README.md`](settings/README.md). |
+| `settings/` | Permission rules for Claude Code (see [`settings/README.md`](settings/README.md)), and a global ruff config |
 | `hooks/` | `block-host-python.sh`: a Claude Code hook that keeps Python inside Docker |
 | `scripts/` | `open-spec-tab.sh`: opens a spec in a new terminal tab |
 | `clients/` | One install note per tool. Only [`clients/claude.md`](clients/claude.md) for now. |
@@ -95,16 +97,16 @@ Set `STORE` to the folder where runs and specs will live.
 
 1. Build the engine and create the store. This is the same for every tool.
 
-       docker build -t work-engine:poc engine
-       mkdir -p "$STORE" && docker run --rm -v "$STORE:$STORE" work-engine:poc openspec init --tools none "$STORE"
+       docker build -t work-engine:0.1.0 engine
+       mkdir -p "$STORE" && docker run --rm -v "$STORE:$STORE" work-engine:0.1.0 openspec init --tools none "$STORE"
 
 2. Connect your tool: [`clients/claude.md`](clients/claude.md). A new tool needs one new file in `clients/`.
 
 ## Run the tests
 
-The tests run inside the engine image:
+The tests run inside the engine image. Run this from a harness worktree, and mount the whole repo folder: the ruff test needs `settings/`, and a worktree keeps its git data in `.bare`.
 
-    docker run --rm -v "$PWD/engine:/e" -w /e work-engine:poc python -m unittest test_gates -v
+    docker run --rm -v "$(dirname "$PWD"):$(dirname "$PWD")" -w "$PWD/engine" work-engine:0.1.0 python -m unittest -v
 
 ## Limits
 
@@ -117,4 +119,5 @@ This is a personal proof of concept. I use it for my own work.
 
 ## Skills this repo expects but does not contain
 
-`grilling`, `pr-description`, `git-wt` and `code-review`. The phases and agents point to them by name.
+`grilling` and `code-review`. The phases and agents point to them by name.
+`git-wt` installs its own skill: see [`clients/claude.md`](clients/claude.md). See also [`docs/2-first-run.md`](docs/2-first-run.md).

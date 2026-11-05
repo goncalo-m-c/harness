@@ -16,7 +16,7 @@ Show each command before you run it. Wait for the user's yes before you change a
 
 1. Find the main checkout. Links must point there, because a worktree can be removed later.
 
-       HARNESS=$(git worktree list --porcelain | sed -n '1s/^worktree //p')
+       HARNESS=$(git worktree list --porcelain | awk '/^worktree /{p=$2} $0=="branch refs/heads/main"{print p}')
        ls "$HARNESS/skills/hunk-review-worktrees/SKILL.md"
 
    If the file is missing, the skill is not on that checkout's branch yet. Stop and tell the user.
