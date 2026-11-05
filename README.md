@@ -83,7 +83,7 @@ A run goes like this:
 | `rules/` | Shared rules: git, code style, commands, communication, subagents |
 | `settings/` | Permission rules for Claude Code (see [`settings/README.md`](settings/README.md)), and a global ruff config |
 | `hooks/` | `block-host-python.sh`: a Claude Code hook that keeps Python inside Docker |
-| `scripts/` | `open-spec-tab.sh`: opens a spec in a new terminal tab |
+| `scripts/` | `open-spec-pane.sh`: opens a spec in a Herdr app pane beside the agent |
 | `clients/` | One install note per tool. Only [`clients/claude.md`](clients/claude.md) for now. |
 | `.claude/` | `harness-setup` and `link-hunk-review`: skills that work before anything is installed |
 
