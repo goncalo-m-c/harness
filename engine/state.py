@@ -1,4 +1,6 @@
-import json, os, re
+import json
+import os
+import re
 from datetime import datetime
 from pathlib import Path
 
@@ -16,7 +18,7 @@ def run_dir(key):
     return STORE / "runs" / key
 
 
-def start_problems(description, prefix, key):
+def start_problems(description: str, prefix: str, key: str) -> list[str]:
     problems = [] if description.strip() else ["description is empty: pass the user's words"]
     if key and not KEY.fullmatch(key):
         problems.append(f"key {key!r} is not PREFIX-NUMBER, like MONEY-2")
@@ -25,18 +27,18 @@ def start_problems(description, prefix, key):
     return problems
 
 
-def next_key(prefix):
+def next_key(prefix: str) -> str:
     """The next free key for PREFIX: MONEY-3 when MONEY-1 and MONEY-2 exist."""
     numbers = [int(m[2]) for m in run_keys() if m[1] == prefix]
     return f"{prefix}-{max(numbers, default=0) + 1}"
 
 
-def known_prefixes():
+def known_prefixes() -> dict[str, str]:
     """{prefix: repo} of the existing runs, so new work can reuse its project's prefix."""
     return {m[1]: run_state(m[0]).get("repo", "") for m in sorted(run_keys(), key=lambda m: int(m[2]))}
 
 
-def run_keys():
+def run_keys() -> list[re.Match[str]]:
     runs = STORE / "runs"
     names = [d.name for d in runs.iterdir() if (d / "state.json").exists()] if runs.is_dir() else []
     return [m for name in names if (m := KEY.fullmatch(name))]
@@ -79,10 +81,10 @@ def log_task(state, kind, request):
         f.write(f"- {now()} [{state['phase']}] {kind}: {request}\n")
 
 
-def name_run(state, slug, repo):
+def name_run(state: dict, slug: str, repo: str) -> None:
     """Grill knows the work at its end, so it names the run. Branch and worktree follow."""
     branch = f"{state['key'].lower()}-{slug}"
-    state |= dict(slug=slug, change=slug, branch=branch, repo=repo, worktree=f"{repo}/{branch}")
+    state |= {"slug": slug, "change": slug, "branch": branch, "repo": repo, "worktree": f"{repo}/{branch}"}
 
 
 def write_run_file(state, name, text):

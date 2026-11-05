@@ -13,7 +13,7 @@ HUNK = re.compile(r"^@@ -\S+ \+(\d+)(?:,(\d+))? @@")  # one hunk header of `git 
 RUFF_CONFIG_HOME = Path(__file__).parent.parent / "settings"  # holds ruff/ruff.toml, the global config
 
 
-def grill_done(state):
+def grill_done(state: dict) -> tuple[bool, list[str]]:
     """Grill ends with the decisions written and the run named: a slug and a git-wt repo."""
     path = run_dir(state["key"]) / "decisions.md"
     reasons = [] if path.exists() and path.read_text().strip() else [f"{path} is missing or blank"]

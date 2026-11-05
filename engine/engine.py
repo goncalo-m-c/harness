@@ -45,9 +45,9 @@ def work_start(description: str, prefix: str = "", key: str = "", models: dict |
     if problems:
         return "Start refused, nothing created:\n- " + "\n- ".join(problems)
     key = key or next_key(prefix)
-    state = dict(key=key, slug="", change="", branch="", repo="", worktree="")
-    state |= dict(phase=PHASES[0]["name"], status="in_progress", pr_url="", models=models)
-    state |= dict(tasks_since_checkpoint=0, history=[])
+    state = {"key": key, "slug": "", "change": "", "branch": "", "repo": "", "worktree": ""}
+    state |= {"phase": PHASES[0]["name"], "status": "in_progress", "pr_url": "", "models": models}
+    state |= {"tasks_since_checkpoint": 0, "history": []}
     record(state, "created")
     write_run_file(state, "ticket.md", f"# {key}\n\n{description}")
     return f"Created run {key}.\n\n" + work_next(key)
@@ -136,7 +136,7 @@ def work_checkpoint(key: str, summary: str) -> str:
     return f"Checkpoint saved. To start fresh, the user runs /clear, then /work {key}."
 
 
-def prefixes_table():
+def prefixes_table() -> str:
     rows = "\n".join(f"{p:<10}{repo or '(repo not set yet)'}" for p, repo in known_prefixes().items())
     return (
         "\n\nKey prefixes in use:\n\n" + (rows or "none yet") + "\n\n"
