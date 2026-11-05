@@ -14,7 +14,7 @@ If you find nothing, the file contains only `No findings.`
 2. If it fails because of `hard` findings, read the reports. Send the findings to `work-implementer` with `work_task` (kind `edit`). Then dispatch both reviewers again.
 3. If it fails because a report is missing or older than the last commit, dispatch that reviewer again.
 4. If it passes, read both reports. Tell the user the result in a few lines, including the `soft` findings.
-5. Open the code for the user to review with the `hunk-review-worktrees` skill, for `{worktree}`. Wait for `work_approve`.
+5. Tell the user to press `r` in the hunk tab from implement to see the new commits. If that tab is closed, open it again with the `hunk-review-worktrees` skill, for `{worktree}`. Wait for `work_approve`.
 **Write:** each reviewer writes its own report in `{store}/runs/{key}/reviews/`. The main window writes nothing.
 **Gate:** `review_passed`. Both reports exist, are newer than the last commit, and have no `hard` finding. The user must approve the push.
 **Never:**

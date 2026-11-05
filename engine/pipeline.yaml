@@ -36,11 +36,5 @@ phases:
     agent: work-pr
     tier: fast
     instructions: phases/pr.md
-    rules: [git]
-    gate: branch_pushed              # refs/remotes/origin/<branch> == HEAD
-  - name: ci
-    agent: work-ci-watcher
-    tier: fast
-    instructions: phases/ci.md
     rules: [commands, git]
-    gate: ci_green                   # runs/<key>/ci/latest.json is for HEAD and every check is SUCCESS, SKIPPED or NEUTRAL
+    gate: ci_green                   # branch pushed; if the repo has .github/workflows, runs/<key>/ci/latest.json is for HEAD and every check is SUCCESS, SKIPPED or NEUTRAL

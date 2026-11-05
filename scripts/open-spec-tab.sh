@@ -10,5 +10,6 @@ for tool in herdr glow jq; do
 done
 created="$(herdr tab create --cwd "$folder" --label "spec-$(basename "$folder")")"
 pane="$(printf '%s' "$created" | jq -r '.result.root_pane.pane_id // empty')"
-[ -n "$pane" ] && herdr pane run "$pane" glow "$folder" >/dev/null
+# The pane's own shell expands $(tput cols), so glow wraps at the new pane's width.
+[ -n "$pane" ] && herdr pane run "$pane" "glow -p -w \$(( \$(tput cols) - 4 )) $(printf '%q' "$folder")" >/dev/null
 echo "spec tab: $folder"

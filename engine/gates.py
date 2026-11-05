@@ -74,12 +74,16 @@ def branch_pushed(state):
 
 
 def ci_green(state):
+    """The branch is pushed. If the repo has CI, every check of the PR head passed."""
+    ok, reasons = branch_pushed(state)
+    if not ok or not (Path(state["worktree"]) / ".github" / "workflows").is_dir():
+        return ok, reasons
     path = run_dir(state["key"]) / "ci" / "latest.json"
     if not path.exists():
-        return False, [f"{path} is missing; run the watcher"]
+        return False, [f"{path} is missing; dispatch work-pr"]
     result = json.loads(path.read_text())
     if result.get("headRefOid") != head_of(state["worktree"]):
-        return False, ["CI result is for an older commit; re-run the watcher"]
+        return False, ["CI result is for an older commit; dispatch work-pr again"]
     checks = result.get("statusCheckRollup") or []
     bad = [
         f"{c.get('name') or c.get('context')}: {outcome(c)}"
@@ -108,6 +112,5 @@ GATES = {
     "openspec_valid": openspec_valid,
     "committed_and_tasks_done": committed_and_tasks_done,
     "review_passed": review_passed,
-    "branch_pushed": branch_pushed,
     "ci_green": ci_green,
 }
