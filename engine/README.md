@@ -21,7 +21,7 @@ The engine owns run state and gates. The chat agent owns the conversation.
 
 The image holds only the runtime. `engine.py` is mounted, so edits need no rebuild.
 
-    docker build -t work-engine:poc <harness>/engine
+    docker build -t work-engine:0.1.0 <harness>/engine
 
 ## MCP entry
 
@@ -32,7 +32,7 @@ Replace `<root>` with the folder that holds the harness and the store.
       "command": "docker",
       "args": ["run", "-i", "--rm", "-v", "<root>:<root>",
                "-e", "WORK_STORE=<root>/work-store",
-               "work-engine:poc", "python", "<root>/harness/engine/engine.py"]
+               "work-engine:0.1.0", "python", "<root>/harness/engine/engine.py"]
     }
 
 Do not auto-approve `work_approve`. The client must ask you each time.

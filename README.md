@@ -97,8 +97,8 @@ Set `STORE` to the folder where runs and specs will live.
 
 1. Build the engine and create the store. This is the same for every tool.
 
-       docker build -t work-engine:poc engine
-       mkdir -p "$STORE" && docker run --rm -v "$STORE:$STORE" work-engine:poc openspec init --tools none "$STORE"
+       docker build -t work-engine:0.1.0 engine
+       mkdir -p "$STORE" && docker run --rm -v "$STORE:$STORE" work-engine:0.1.0 openspec init --tools none "$STORE"
 
 2. Connect your tool: [`clients/claude.md`](clients/claude.md). A new tool needs one new file in `clients/`.
 
@@ -106,7 +106,7 @@ Set `STORE` to the folder where runs and specs will live.
 
 The tests run inside the engine image:
 
-    docker run --rm -v "$PWD/engine:/e" -w /e work-engine:poc python -m unittest test_gates -v
+    docker run --rm -v "$PWD/engine:/e" -w /e work-engine:0.1.0 python -m unittest test_gates -v
 
 ## Limits
 

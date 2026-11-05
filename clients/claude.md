@@ -12,7 +12,7 @@ Set these in your shell. Use full paths.
 
     claude mcp add work --scope user -- docker run -i --rm \
       -v "$ROOT:$ROOT" -v "$STORE:$STORE" -e "WORK_STORE=$STORE" \
-      work-engine:poc python "$HARNESS/engine/engine.py"
+      work-engine:0.1.0 python "$HARNESS/engine/engine.py"
 
 Check it with `claude mcp get work`.
 

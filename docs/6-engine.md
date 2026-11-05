@@ -77,7 +77,7 @@ Read the files in this order:
 The tests are in `test_gates.py`. Run them in Docker:
 
     docker run --rm -v "$ROOT:$ROOT" -e WORK_STORE=/tmp/store \
-      -w "$HARNESS/engine" work-engine:poc python -m unittest test_gates -v
+      -w "$HARNESS/engine" work-engine:0.1.0 python -m unittest test_gates -v
 
 `ROOT` and `HARNESS` are the paths from [`clients/claude.md`](../clients/claude.md).
 Mount all of `ROOT`, not only the harness. A git worktree keeps its git data in the main checkout.
