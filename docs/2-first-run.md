@@ -39,22 +39,25 @@ Restart Claude Code at the end. It loads skills, rules and MCP servers only at s
 
 ## Your first ticket
 
-This example uses the ticket `ABC-123`, the short name `add-login` and the repo `~/Projects/my-repo`.
+This example adds a login page to the repo `~/Projects/my-repo`.
 
-**1. Start the run.**
+**1. Start the run.** Describe the work in your own words:
 
-    /work ABC-123 add-login ~/Projects/my-repo
+    /work add a login page
 
-The agent shows a table with one model for each subagent. Confirm it or change a model.
+The agent shows a table with one model for each subagent, and the key prefixes already in use. Confirm the models or change one.
+Pick a prefix, for example `ABC`. The engine gives the next free key, here `ABC-1`, and saves your words in the store.
+If you already have a ticket key (from Jira, for example), give that instead.
 
 **2. Grill.** The agent asks you questions until the two of you agree on what to build.
 It looks up facts in the code itself and asks you only for decisions.
-At the end it shows you the list of decisions. When you confirm, the engine saves them.
+At the end it shows you the list of decisions. You also agree on a short name (the slug), like `add-login`, and the repo.
+When you confirm, the engine saves the decisions and names the branch `abc-1-add-login`.
 
 **3. Spec.** A subagent turns the decisions into a spec: a proposal, a design and a task list.
 The spec opens in a new tab. Read it. If it is right, say yes. Claude Code then asks you to allow `work_approve`.
 
-**4. Implement.** The agent creates the worktree `~/Projects/my-repo/abc-123-add-login`.
+**4. Implement.** The agent creates the worktree `~/Projects/my-repo/abc-1-add-login`.
 A subagent writes the code there and commits each step. Then the commits open in hunk, in a new tab.
 Ask for changes now, before the review. When you are happy, say go.
 
@@ -72,6 +75,6 @@ The agent is told never to merge the PR or mark it ready. Permission rules also 
 
 ## If you stop halfway
 
-Run `/work ABC-123`. See [Daily use](4-daily-use.md#resuming-a-run).
+Run `/work ABC-1`. See [Daily use](4-daily-use.md#resuming-a-run).
 
 Next: [Phases](3-phases.md).

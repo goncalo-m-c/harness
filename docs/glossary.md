@@ -20,7 +20,7 @@
 
 **Hard finding.** A review finding that must be fixed. A `soft` finding is a suggestion and does not block the gate.
 
-**Key.** The ticket ID, like `ABC-123`. It names the run.
+**Key.** The ticket ID, like `ABC-123`. It names the run. The engine gives the next free number for a prefix, or you give your own key.
 
 **MCP.** Model Context Protocol: the standard way an agent calls the tools of a program like the engine.
 
@@ -30,7 +30,7 @@
 
 **Run.** One ticket going through all the phases. Its files are in `runs/<KEY>/` in the store.
 
-**Slug.** A short name for the work, like `add-login`. The branch name is the key in lower case plus the slug: `abc-123-add-login`.
+**Slug.** A short name for the work, like `add-login`. You agree on it at the end of grill. The branch name is the key in lower case plus the slug: `abc-123-add-login`.
 
 **Store.** The folder that holds all runs and specs.
 

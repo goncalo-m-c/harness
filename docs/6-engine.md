@@ -10,9 +10,9 @@ The chat agent talks to the engine only through these tools:
 
 | Tool | What it does |
 |---|---|
-| `work_start(key, slug, repo, models)` | Creates a run. Without `models`, it creates nothing and returns the model table to confirm. |
+| `work_start(description, prefix or key, models)` | Creates a run with the next free key for the prefix, or with your key. Without `models`, it creates nothing and returns the model table and the prefixes in use. |
 | `work_next(key)` | Returns the current phase, its instructions, its gate and the latest checkpoint. |
-| `work_complete(key, evidence)` | Runs the gate of the current phase. On a pass, the run moves on or waits for approval. |
+| `work_complete(key, evidence)` | Runs the gate of the current phase. On a pass, the run moves on or waits for approval. In grill it also takes `slug` and `repo`, and names the branch and the worktree. |
 | `work_approve(key)` | Your approval. It works only when an approval is waiting. |
 | `work_task(key, request, kind)` | Logs an extra request and returns the prompt for the subagent. The phase stays the same. |
 | `work_checkpoint(key, summary)` | Saves the latest checkpoint. |
@@ -33,6 +33,7 @@ The store is a folder you choose, for example `~/Projects/work-store`. It holds 
 work-store/
   runs/<KEY>/
     state.json        phase, status, branch, models, history   (only the engine writes it)
+    ticket.md         your first description of the work       (the engine writes it)
     decisions.md      the decisions from grill                 (the engine writes it)
     checkpoint.md     the latest checkpoint                    (the engine writes it)
     tasks.md          every extra request                      (the engine writes it)

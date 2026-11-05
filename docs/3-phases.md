@@ -8,7 +8,7 @@ What the agent does in each phase is in [`engine/phases/`](../engine/phases/).
 
 | Phase | Who works | What it produces | Gate (the check) | Your part |
 |---|---|---|---|---|
-| grill | the chat agent, with you | `decisions.md` | the file exists and is not empty | you confirm the decisions (the agent asks; no check) |
+| grill | the chat agent, with you | `decisions.md` | the file is not empty, the slug is set, and the repo uses the git-wt layout | you confirm the decisions (the agent asks; no check) |
 | spec | `work-spec-writer` | an OpenSpec change: proposal, design, specs, tasks | `openspec validate --strict` passes | **approval** |
 | implement | `work-implementer` | commits in the worktree | one commit or more, clean tree, every task ticked, no new ruff errors | you say go after the hunk review (the agent asks; no check) |
 | review | `work-reviewer-spec` and `work-reviewer-standards` | two review reports | both reports are newer than the last commit, no `hard` finding, no new ruff errors | **approval**: this allows the push |
@@ -36,7 +36,7 @@ If the repo has no CI, the phase ends when the branch is pushed.
 
 A gate is a small Python function in [`engine/gates.py`](../engine/gates.py).
 The engine looks at real files: the git state, the reports, the CI result.
-One gate is weak: the grill gate only checks that the decisions file is not empty.
+One gate is weak: the grill gate does not judge the decisions. It only checks that the file is not empty.
 When a gate fails, the engine sends back the reasons. The agent fixes them and tries again.
 
 ## Approvals

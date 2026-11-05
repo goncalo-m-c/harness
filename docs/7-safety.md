@@ -39,7 +39,7 @@ These rules usually hold. But if one breaks, nothing stops it. Watch for them.
 
 ## Weak spots
 
-- **The grill gate is weak.** It passes on any text that is not empty.
+- **The grill gate is weak.** It passes on any decisions text that is not empty. It checks the slug and the repo, not the decisions.
 - **The review reports are not protected.** An agent could write "No findings." itself, and the review gate would pass.
 - **Permission rules can be bypassed.** A command hidden in `bash -c "..."`, or a script that writes a file, gets around them.
 - **`dontAsk` mode breaks the approvals.** In that mode every `ask` becomes a refusal. Do not use it with this harness.

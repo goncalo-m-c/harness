@@ -72,7 +72,7 @@ If the reason is wrong, the gate may have a bug. Fix it in `engine/gates.py`.
 
 **The spec turns out to be wrong.** A run cannot go back a phase. Two ways out:
 - Fix the spec with an extra edit request. The spec writer's files are plain text in `openspec/changes/<slug>/`.
-- Start over. Delete `runs/<KEY>/` and `openspec/changes/<slug>/` in the store yourself. Then run `/work KEY SLUG REPO` again.
+- Start over. Delete `runs/<KEY>/` and `openspec/changes/<slug>/` in the store yourself. Then run `/work <description>` again.
   The worktree and its commits stay. Delete them with `git-wt` if you do not need them.
 
 Next: [Rules](5-rules.md).

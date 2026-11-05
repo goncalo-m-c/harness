@@ -33,7 +33,7 @@ So the agent cannot skip a phase. Most gates look at real files, so the agent ca
 More words are in the [glossary](glossary.md).
 
 ```
- you  <->  chat agent  (/work KEY SLUG REPO)
+ you  <->  chat agent  (/work <description>)
                 |
                 |  asks the engine what to do next, and reports when a phase is done
                 v
