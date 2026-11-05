@@ -104,9 +104,9 @@ Set `STORE` to the folder where runs and specs will live.
 
 ## Run the tests
 
-The tests run inside the engine image:
+The tests run inside the engine image. Run this from a harness worktree, and mount the whole repo folder: the ruff test needs `settings/`, and a worktree keeps its git data in `.bare`.
 
-    docker run --rm -v "$PWD/engine:/e" -w /e work-engine:0.1.0 python -m unittest test_gates -v
+    docker run --rm -v "$(dirname "$PWD"):$(dirname "$PWD")" -w "$PWD/engine" work-engine:0.1.0 python -m unittest -v
 
 ## Limits
 

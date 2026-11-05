@@ -74,10 +74,10 @@ Read the files in this order:
 3. [`engine.py`](../engine/engine.py): the six tools.
 4. `state.py`, `models.py`, `dispatch.py`, `gates.py`: what the tools call.
 
-The tests are in `test_gates.py`. Run them in Docker:
+The tests are in `test_gates.py` and `test_state.py`. Run them all in Docker:
 
     docker run --rm -v "$ROOT:$ROOT" -e WORK_STORE=/tmp/store \
-      -w "$HARNESS/engine" work-engine:0.1.0 python -m unittest test_gates -v
+      -w "$HARNESS/engine" work-engine:0.1.0 python -m unittest -v
 
 `ROOT` and `HARNESS` are the paths from [`clients/claude.md`](../clients/claude.md).
 Mount all of `ROOT`, not only the harness. A git worktree keeps its git data in the main checkout.
