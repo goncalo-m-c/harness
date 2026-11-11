@@ -206,7 +206,7 @@ class AdvanceTest(FakeGhCase):
     def setUp(self) -> None:
         super().setUp()
         self.run = {"key": "T-9", "phase": "spec", "status": "in_progress", "history": [],
-                    "issue": "https://github.com/o/r/issues/3", "board_item": "ITEM1"}
+                    "issue": "https://github.com/o/r/issues/3", "board_item": "ITEM1", "repo": "/r"}
 
     def advance_through(self, *phases: str) -> None:
         for phase in phases:
@@ -230,12 +230,70 @@ class AdvanceTest(FakeGhCase):
         self.advance_through("spec")
         self.assertEqual((self.run["phase"], self.run["status"]), ("implement", "in_progress"))
         events = [h["event"] for h in self.run["history"]]
-        self.assertEqual(events, ["entered", "github_failed"])
+        self.assertEqual(events, ["entered", "github_failed", "github_failed"])  # the comment and the move
         self.assertIn("bad credentials", self.run["history"][-1]["detail"])
 
     def test_without_work_project_there_is_no_gh_call(self) -> None:
         with mock.patch.dict(os.environ, {"WORK_PROJECT": ""}):
             self.advance_through("spec", "pr")
+        self.assertEqual(self.gh.calls, [])
+
+
+class CommentTest(FakeGhCase):
+    URL = "https://github.com/o/r/issues/3"
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.run = {"key": "T-8", "phase": "review", "status": "in_progress", "history": [],
+                    "issue": self.URL, "board_item": "ITEM1", "repo": "/r"}
+
+    def comments(self) -> list[str]:
+        return [c[c.index("--body") + 1] for c in self.gh.calls if c[:2] == ("issue", "comment")]
+
+    def test_listed_events_become_a_comment(self) -> None:
+        for event in state.COMMENT_EVENTS:
+            state.record(self.run, event)
+        self.assertEqual(len(self.comments()), len(state.COMMENT_EVENTS))
+
+    def test_other_events_make_no_comment(self) -> None:
+        for event in ("created", "checkpoint", "gate_passed"):
+            state.record(self.run, event)
+        self.assertEqual(self.gh.calls, [])
+
+    def test_comment_never_carries_local_paths(self) -> None:
+        detail = f"{state.STORE}/runs/T-8 and /Users/alice/x"
+        state.record(self.run, "gate_failed", detail)
+        self.assertEqual(self.comments(), ["`review` · gate_failed — <store>/runs/T-8 and ~/x"])
+        self.assertEqual(self.run["history"][-1]["detail"], detail)
+
+    def test_comment_has_phase_event_and_detail(self) -> None:
+        state.record(self.run, "gate_failed", "no commit ahead of main")
+        state.record(self.run, "approved")
+        self.assertEqual(self.comments(), ["`review` · gate_failed — no commit ahead of main", "`review` · approved"])
+
+    def test_a_failing_gh_becomes_github_failed_without_a_loop(self) -> None:
+        self.gh.fail = True
+        state.record(self.run, "gate_failed", "why")
+        self.assertEqual([h["event"] for h in self.run["history"]], ["gate_failed", "github_failed"])
+        self.assertEqual(len(self.gh.calls), 1)
+
+    def test_no_comment_before_the_repo_is_known(self) -> None:
+        del self.run["repo"]
+        state.record(self.run, "gate_failed", "ruff output with /private/paths")
+        self.assertEqual(self.gh.calls, [])
+
+    def test_github_skipped_is_not_a_comment_event(self) -> None:
+        state.record(self.run, "github_skipped", "issue is in o/r, the code is in o/x")
+        self.assertEqual(self.gh.calls, [])
+
+    def test_a_run_without_an_issue_makes_no_comment(self) -> None:
+        self.run["issue"] = ""
+        state.record(self.run, "approved")
+        self.assertEqual(self.gh.calls, [])
+
+    def test_without_work_project_there_is_no_gh_call(self) -> None:
+        with mock.patch.dict(os.environ, {"WORK_PROJECT": ""}):
+            state.record(self.run, "approved")
         self.assertEqual(self.gh.calls, [])
 
 

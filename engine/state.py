@@ -11,10 +11,12 @@ import yaml
 
 HERE = Path(__file__).parent
 STORE = Path(os.environ["WORK_STORE"])
+HOME_PATH = re.compile(r"/(?:Users|home)/[^/\s]+")
 PIPELINE = yaml.safe_load((HERE / "pipeline.yaml").read_text())
 PHASES = PIPELINE["phases"]
 EVIDENCE_PHASES = ("grill",)  # phases where work_complete(evidence) carries the file body
 KEY = re.compile(r"([A-Z][A-Z0-9]*)-(\d+)")  # PREFIX-NUMBER, like MONEY-2
+COMMENT_EVENTS = ("entered", "gate_failed", "approved", "complete_refused", "approve_refused", "task", "done")
 ISSUE_URL = re.compile(r"https://github\.com/[\w.-]+/[\w.-]+/issues/\d+")
 REMOTE = re.compile(r"(?:https://github\.com/|git@github\.com:|ssh://git@github\.com/)([\w.-]+/[\w.-]+?)(?:\.git)?/?")
 ISSUE_SHORT = re.compile(r"([\w.-]+/[\w.-]+)#(\d+)")  # owner/repo#n
@@ -107,13 +109,22 @@ def move_card(state: dict, old_lane: str, new_lane: str) -> None:
         board_call(state, board.move, state["board_item"], new_lane)
 
 
-def record(state, event, detail=""):
-    """Append to history and save atomically."""
+def record(state: dict, event: str, detail: str = "") -> None:
+    """Append to history and save atomically. Some events also go to the issue as a comment,
+    but only once the repo is known: the same-repo check at the end of grill has run by then."""
     entry = {"ts": now(), "phase": state["phase"], "event": event}
     if detail:
         entry["detail"] = detail
     state["history"].append(entry)
     save(state)
+    if event in COMMENT_EVENTS and board.enabled() and state.get("issue") and state.get("repo"):
+        board_call(state, board.comment, state["issue"], comment_text(state["phase"], event, detail))
+
+
+def comment_text(phase: str, event: str, detail: str) -> str:
+    """The comment for GitHub. Local paths are scrubbed, the local history keeps the full detail."""
+    detail = HOME_PATH.sub("~", detail.replace(str(STORE), "<store>"))
+    return f"`{phase}` · {event}" + (f" — {detail}" if detail else "")
 
 
 def save(state: dict) -> None:
