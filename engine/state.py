@@ -75,7 +75,7 @@ def link_issue(state: dict, issue: str) -> None:
     state["issue"] = issue
     if board.enabled() and (item := board_call(state, board.add, issue)):
         state["board_item"] = item
-        board_call(state, board.move, item, phase_spec(state["phase"])["lane"])
+        move_card(state, "", phase_spec(state["phase"])["lane"])
     save(state)
 
 
@@ -87,15 +87,24 @@ def board_call(state: dict, action: Callable, *args: str) -> str | None:
         record(state, "github_failed", str(error)[:300])
 
 
-def advance(state):
+def advance(state: dict) -> None:
     names = [p["name"] for p in PHASES]
+    lane = phase_spec(state["phase"])["lane"]
     i = names.index(state["phase"]) + 1
     if i == len(names):
         state["status"] = "done"
         record(state, "done")
+        move_card(state, lane, PIPELINE["done_lane"])
         return
     state["phase"], state["status"] = names[i], "in_progress"
     record(state, "entered")
+    move_card(state, lane, phase_spec(names[i])["lane"])
+
+
+def move_card(state: dict, old_lane: str, new_lane: str) -> None:
+    """Move the card when the lane changes (implement to review stays In Progress)."""
+    if new_lane != old_lane and board.enabled() and state.get("board_item"):
+        board_call(state, board.move, state["board_item"], new_lane)
 
 
 def record(state, event, detail=""):

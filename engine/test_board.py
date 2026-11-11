@@ -61,6 +61,11 @@ class FakeGhCase(unittest.TestCase):
         patch.start()
         self.addCleanup(patch.stop)
 
+    def lanes_moved_to(self) -> list[str]:
+        options = {"O1": "Backlog", "O2": "In Progress", "O3": "In Review"}
+        edits = [c for c in self.gh.calls if c[:2] == ("project", "item-edit")]
+        return [options[c[c.index("--single-select-option-id") + 1]] for c in edits]
+
 
 class BoardTest(FakeGhCase):
 
@@ -135,7 +140,7 @@ class StartTest(FakeGhCase):
         run = self.start_run("T-2", "o/r#3")
         self.assertEqual((run["issue"], run["board_item"]), (self.ISSUE, "ITEM1"))
         self.assertEqual(self.gh.calls[0][:2], ("project", "item-add"))
-        self.assertEqual(self.gh.calls[-1][self.gh.calls[-1].index("--single-select-option-id") + 1], "O1")
+        self.assertEqual(self.lanes_moved_to()[-1], "Backlog")
 
     def test_start_without_an_issue_tracks_nothing(self) -> None:
         run = self.start_run("T-3")
@@ -195,6 +200,44 @@ class SameRepoTest(FakeGhCase):
     def test_a_run_without_an_issue_records_nothing(self) -> None:
         run = self.named_run("git@github.com:o/x.git", issue="")
         self.assertEqual(run["history"], [])
+
+
+class AdvanceTest(FakeGhCase):
+    def setUp(self) -> None:
+        super().setUp()
+        self.run = {"key": "T-9", "phase": "spec", "status": "in_progress", "history": [],
+                    "issue": "https://github.com/o/r/issues/3", "board_item": "ITEM1"}
+
+    def advance_through(self, *phases: str) -> None:
+        for phase in phases:
+            self.run["phase"] = phase
+            state.advance(self.run)
+
+    def test_a_lane_change_moves_the_card(self) -> None:
+        self.advance_through("spec")  # Backlog to In Progress (implement)
+        self.assertEqual(self.lanes_moved_to(), ["In Progress"])
+
+    def test_the_same_lane_does_not_move_the_card(self) -> None:
+        self.advance_through("grill", "implement", "review")
+        self.assertEqual(self.lanes_moved_to(), [])
+
+    def test_done_moves_the_card_to_in_review(self) -> None:
+        self.advance_through("pr")
+        self.assertEqual((self.run["status"], self.lanes_moved_to()), ("done", ["In Review"]))
+
+    def test_a_failing_gh_does_not_stop_the_run(self) -> None:
+        self.gh.fail = True
+        self.advance_through("spec")
+        self.assertEqual((self.run["phase"], self.run["status"]), ("implement", "in_progress"))
+        events = [h["event"] for h in self.run["history"]]
+        self.assertEqual(events, ["entered", "github_failed"])
+        self.assertIn("bad credentials", self.run["history"][-1]["detail"])
+
+    def test_without_work_project_there_is_no_gh_call(self) -> None:
+        with mock.patch.dict(os.environ, {"WORK_PROJECT": ""}):
+            self.advance_through("spec", "pr")
+        self.assertEqual(self.gh.calls, [])
+
 
 class GhHelperTest(unittest.TestCase):
     def run_gh(self, token_var: str, outside: dict) -> dict:
