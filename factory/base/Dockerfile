@@ -50,3 +50,12 @@ ENV PATH=/home/agent/.local/bin:${PATH} \
     DISABLE_AUTOUPDATER=1
 RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "${CLAUDE_VERSION}" >/dev/null
 RUN curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_NO_MODIFY_PATH=1 sh >/dev/null
+
+# The entrypoint starts as root to set the firewall, then runs the command as the box user.
+# A box stays alive with `sleep infinity`; the box runner works in it with `docker exec -u agent`.
+# Root is needed only to set the firewall; the entrypoint then drops to the box user.
+# hadolint ignore=DL3002
+USER root
+COPY --chmod=0755 entrypoint.sh /usr/local/bin/factory-entrypoint
+ENTRYPOINT ["/usr/local/bin/factory-entrypoint"]
+CMD ["sleep", "infinity"]
