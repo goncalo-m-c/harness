@@ -3,6 +3,7 @@
 import importlib
 import json
 import os
+import subprocess
 import tempfile
 import unittest
 from unittest import mock
@@ -10,6 +11,10 @@ from unittest import mock
 os.environ.setdefault("WORK_STORE", tempfile.mkdtemp())  # one store for all test files
 
 import board
+import models
+import state
+
+import engine
 
 TOKENS = {"WORK_BOARD_TOKEN": "board-secret", "WORK_ISSUES_TOKEN": "issues-secret"}
 
@@ -42,7 +47,9 @@ class FakeGh:
         return json.dumps(answers.get(args[:2], {}))
 
 
-class BoardTest(unittest.TestCase):
+class FakeGhCase(unittest.TestCase):
+    """Every test runs with WORK_PROJECT and both tokens set, and gh replaced by FakeGh."""
+
     def setUp(self) -> None:
         board.project_id.cache_clear()
         board.status_field.cache_clear()
@@ -53,6 +60,9 @@ class BoardTest(unittest.TestCase):
         patch = mock.patch.object(board, "gh", self.gh)
         patch.start()
         self.addCleanup(patch.stop)
+
+
+class BoardTest(FakeGhCase):
 
     def test_add_returns_the_item_id(self) -> None:
         item = board.add("https://github.com/o/r/issues/3")
@@ -100,6 +110,91 @@ class BoardTest(unittest.TestCase):
         with mock.patch.dict(os.environ, {"WORK_PROJECT": ""}):
             self.assertFalse(board.enabled())
 
+
+class StartTest(FakeGhCase):
+    ISSUE = "https://github.com/o/r/issues/3"
+
+    def all_models(self) -> dict:
+        return {a: m for p in state.PHASES for a, m in models.phase_models(p).items()}
+
+    def start_run(self, key: str, issue: str = "") -> dict:
+        engine.work_start("a task", key=key, models=self.all_models(), issue=issue)
+        return state.run_state(key)
+
+    def test_issue_forms_become_a_url(self) -> None:
+        self.assertEqual(state.issue_url(self.ISSUE), self.ISSUE)
+        self.assertEqual(state.issue_url("o/r#3"), self.ISSUE)
+        self.assertEqual(state.issue_url("nonsense"), "")
+
+    def test_a_bad_issue_is_refused_and_creates_nothing(self) -> None:
+        text = engine.work_start("a task", key="T-1", models=self.all_models(), issue="nonsense")
+        self.assertIn("Start refused", text)
+        self.assertFalse(state.run_dir("T-1").exists())
+
+    def test_start_with_an_issue_adds_the_card_and_puts_it_in_backlog(self) -> None:
+        run = self.start_run("T-2", "o/r#3")
+        self.assertEqual((run["issue"], run["board_item"]), (self.ISSUE, "ITEM1"))
+        self.assertEqual(self.gh.calls[0][:2], ("project", "item-add"))
+        self.assertEqual(self.gh.calls[-1][self.gh.calls[-1].index("--single-select-option-id") + 1], "O1")
+
+    def test_start_without_an_issue_tracks_nothing(self) -> None:
+        run = self.start_run("T-3")
+        self.assertEqual((run["issue"], run["board_item"]), ("", ""))
+        self.assertEqual(self.gh.calls, [])
+
+    def test_start_without_work_project_makes_no_gh_call(self) -> None:
+        with mock.patch.dict(os.environ, {"WORK_PROJECT": ""}):
+            run = self.start_run("T-4", self.ISSUE)
+        self.assertEqual((run["issue"], run["board_item"]), (self.ISSUE, ""))
+        self.assertEqual(self.gh.calls, [])
+
+    def test_a_failing_gh_still_creates_the_run(self) -> None:
+        self.gh.fail = True
+        run = self.start_run("T-5", self.ISSUE)
+        self.assertEqual(run["board_item"], "")
+        self.assertEqual([h["event"] for h in run["history"]], ["created", "github_failed"])
+
+
+class SameRepoTest(FakeGhCase):
+    """At the end of grill the issue must be in the repo of the code, or the board is off for the run."""
+    ISSUE = "https://github.com/o/r/issues/3"
+
+    def named_run(self, origin: str, issue: str = ISSUE) -> dict:
+        repo = tempfile.mkdtemp()
+        subprocess.run(["git", "-C", repo, "init", "-q"], check=True)
+        if origin:
+            subprocess.run(["git", "-C", repo, "remote", "add", "origin", origin], check=True)
+        run = {"key": "T-6", "phase": "grill", "status": "in_progress", "history": [],
+               "issue": issue, "board_item": "ITEM1"}
+        state.name_run(run, "slug", repo)
+        return run
+
+    def test_the_same_repo_keeps_the_issue_for_every_origin_form(self) -> None:
+        for origin in ("https://github.com/o/r", "https://github.com/o/r.git", "git@github.com:o/r.git",
+                       "ssh://git@github.com/o/r.git", "https://github.com/O/R.git"):
+            with self.subTest(origin=origin):
+                run = self.named_run(origin)
+                self.assertEqual((run["issue"], run["board_item"], run["history"]), (self.ISSUE, "ITEM1", []))
+
+    def test_another_repo_clears_the_issue_and_records_why(self) -> None:
+        run = self.named_run("git@github.com:o/x.git")
+        self.assertEqual((run["issue"], run["board_item"]), ("", ""))
+        self.assertEqual([h["event"] for h in run["history"]], ["github_skipped"])
+        self.assertIn("issue is in o/r, the code is in o/x: the board is off", run["history"][0]["detail"])
+        self.assertEqual(self.gh.calls, [])
+        state.record(run, "gate_failed", "x")
+        self.assertEqual(self.gh.calls, [])
+
+    def test_an_unreadable_origin_clears_the_issue(self) -> None:
+        for origin in ("", "https://example.com/o/r.git"):
+            with self.subTest(origin=origin):
+                run = self.named_run(origin)
+                self.assertEqual(run["issue"], "")
+                self.assertEqual(run["history"][0]["event"], "github_skipped")
+
+    def test_a_run_without_an_issue_records_nothing(self) -> None:
+        run = self.named_run("git@github.com:o/x.git", issue="")
+        self.assertEqual(run["history"], [])
 
 class GhHelperTest(unittest.TestCase):
     def run_gh(self, token_var: str, outside: dict) -> dict:

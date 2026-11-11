@@ -10,8 +10,10 @@ from state import (
     EVIDENCE_PHASES,
     PHASES,
     advance,
+    issue_url,
     known_prefixes,
     latest_checkpoint,
+    link_issue,
     name_run,
     next_key,
     phase_spec,
@@ -32,23 +34,28 @@ SAVE_CHECKPOINT = (
 
 
 @mcp.tool()
-def work_start(description: str, prefix: str = "", key: str = "", models: dict | None = None) -> str:
+def work_start(
+    description: str, prefix: str = "", key: str = "", models: dict | None = None, issue: str = ""
+) -> str:
     """Create a run from the user's DESCRIPTION and return the grill instructions.
     The key is KEY when the user gave one, else the next free number for PREFIX (like MONEY-2).
+    ISSUE (a URL or owner/repo#n) links the run to a GitHub issue on the board; leave it out to track nothing.
     Grill sets the slug and the repo at its end.
     Without MODELS (agent -> model), create nothing and return the models and prefixes to confirm."""
     if key and run_dir(key).exists():
         return f"Run {key} already exists. Call work_next instead."
     if models is None:
         return models_table() + prefixes_table()
-    problems = model_problems(models) + start_problems(description, prefix, key)
+    problems = model_problems(models) + start_problems(description, prefix, key, issue)
     if problems:
         return "Start refused, nothing created:\n- " + "\n- ".join(problems)
     key = key or next_key(prefix)
     state = {"key": key, "slug": "", "change": "", "branch": "", "repo": "", "worktree": ""}
     state |= {"phase": PHASES[0]["name"], "status": "in_progress", "pr_url": "", "models": models}
+    state |= {"issue": "", "board_item": ""}
     state |= {"tasks_since_checkpoint": 0, "history": []}
     record(state, "created")
+    link_issue(state, issue_url(issue))
     write_run_file(state, "ticket.md", f"# {key}\n\n{description}")
     return f"Created run {key}.\n\n" + work_next(key)
 

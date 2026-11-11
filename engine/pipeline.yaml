@@ -4,28 +4,34 @@
 # tier / agents: default tier per subagent (fast, standard, strong). The user confirms the models at work_start.
 # client_models: turns a tier into a model name. WORK_CLIENT picks the table (default: claude).
 # rules: files from rules/ pasted into the instructions. Subagent phases get them inside the subagent prompt.
+# lane: the board lane (Status) of the card while the run is in this phase.
 # needs_approval: the human must call work_approve before the next phase starts.
 client_models:
   claude: {fast: haiku, standard: sonnet, strong: opus}
+done_lane: In Review          # the lane of the card when the last gate passes. Merging moves it to Done on GitHub.
 phases:
   - name: grill
+    lane: Backlog
     agent: main
     instructions: phases/grill.md
     rules: [communication, subagents]
     gate: grill_done                 # runs/<key>/decisions.md is non-empty, slug is set, repo has .bare
   - name: spec
+    lane: Backlog
     agent: work-spec-writer
     tier: standard
     instructions: phases/spec.md
     gate: openspec_valid             # openspec validate <change> --strict (cwd=store)
     needs_approval: true
   - name: implement
+    lane: In Progress
     agent: work-implementer
     tier: standard
     instructions: phases/implement.md
     rules: [code-style, commands, git]
     gate: committed_and_tasks_done   # >=1 commit ahead of origin/main, clean tree, no "- [ ]" in tasks.md
   - name: review
+    lane: In Progress
     agents:
       work-reviewer-spec: strong
       work-reviewer-standards: strong
@@ -33,6 +39,7 @@ phases:
     gate: review_passed              # reviews/spec.md and standards.md are newer than HEAD and have no `- hard:` line
     needs_approval: true             # approval = permission to push
   - name: pr
+    lane: In Progress
     agent: work-pr
     tier: fast
     instructions: phases/pr.md
