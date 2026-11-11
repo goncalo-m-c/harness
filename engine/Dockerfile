@@ -9,7 +9,7 @@ FROM ghcr.io/astral-sh/uv:python3.12-alpine
 COPY --from=openspec /usr/local/bin/node /usr/local/bin/node
 COPY --from=openspec /usr/local/lib/node_modules /usr/local/lib/node_modules
 RUN ln -s /usr/local/lib/node_modules/@fission-ai/openspec/bin/openspec.js /usr/local/bin/openspec \
-    && apk add --no-cache git ca-certificates libstdc++ \
+    && apk add --no-cache git github-cli ca-certificates libstdc++ \
     && git config --system --add safe.directory '*'
 # mcp<2: engine.py uses FastMCP, renamed in mcp 2.x. ruff: the gates check new Python lines; keep it
 # at the version in skills/review-rules/rules/python.md.
