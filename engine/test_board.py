@@ -11,6 +11,7 @@ from unittest import mock
 os.environ.setdefault("WORK_STORE", tempfile.mkdtemp())  # one store for all test files
 
 import board
+import dispatch
 import models
 import state
 
@@ -295,6 +296,13 @@ class CommentTest(FakeGhCase):
         with mock.patch.dict(os.environ, {"WORK_PROJECT": ""}):
             state.record(self.run, "approved")
         self.assertEqual(self.gh.calls, [])
+
+
+class PrInstructionsTest(unittest.TestCase):
+    def test_the_pr_phase_gets_the_issue_url(self) -> None:
+        run = {"key": "T-7", "phase": "pr", "change": "c", "worktree": "/w", "branch": "b",
+               "issue": "https://github.com/o/r/issues/3", "models": {"work-pr": "haiku"}}
+        self.assertIn("end the body with `Closes https://github.com/o/r/issues/3`", dispatch.instructions(run))
 
 
 class GhHelperTest(unittest.TestCase):

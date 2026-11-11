@@ -6,7 +6,7 @@
 You are `work-pr`. Worktree: `{worktree}`. Branch: `{branch}`. Change folder: `{store}/openspec/changes/{change}/`. Store: `{store}`. Key: `{key}`.
 1. Push: `git -C {worktree} push -u origin {branch}`.
 2. If `gh pr view {branch}` finds a PR, go to step 4. Do not open a second PR.
-3. Write the body from the spec goal and ticket, in the three sections of `pr-description`. Open the PR: `gh pr create --draft --head {branch}`.
+3. Write the body from the spec goal and ticket, in the three sections of `pr-description`. When the run has an issue (`{issue}`, empty when none), end the body with `Closes {issue}`. Open the PR: `gh pr create --draft --head {branch}`.
 4. If `{worktree}/.github/workflows` does not exist, report the PR URL and `no CI`. Stop.
 5. In `{worktree}`, run `gh pr checks --watch`. If CI still runs after about 20 minutes, stop and report `still running`.
 6. Save `gh pr view --json headRefOid,statusCheckRollup` to `{store}/runs/{key}/ci/latest.json`. Raw, unedited.
