@@ -13,6 +13,7 @@ Copy the `permissions` block of `permissions.example.json` into `~/.claude/setti
 | `deny Edit(**/runs/**/state.json)` | No agent edits a run's `state.json`. Shell writes like `sed` and `>` are covered too. |
 | `deny gh pr merge`, `gh pr ready` | No agent merges a PR or marks it ready. |
 | `deny git push ... main` or `master` | No push to main. Both `git push` and `git -C <path> push` are listed. |
+| `deny security find-generic-password`, `docker inspect`, `docker exec` (and the `docker container` forms) | Blocks the plain ways an agent reads the factory tokens. Other forms can still get through, so the narrow token scope is the real guard. See [GitHub tokens](../clients/claude.md#github-tokens). |
 | `ask git push` | Every other push asks you first. |
 | `ask mcp__work__work_approve` | Approval always asks you. It assumes the MCP server is named `work`. |
 

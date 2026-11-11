@@ -7,7 +7,12 @@
       "Bash(git push * main)",
       "Bash(git push * master)",
       "Bash(git -C * push * main)",
-      "Bash(git -C * push * master)"
+      "Bash(git -C * push * master)",
+      "Bash(security find-generic-password *)",
+      "Bash(docker inspect *)",
+      "Bash(docker exec *)",
+      "Bash(docker container inspect *)",
+      "Bash(docker container exec *)"
     ],
     "ask": [
       "mcp__work__work_approve",

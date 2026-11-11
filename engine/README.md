@@ -29,11 +29,16 @@ Replace `<root>` with the folder that holds the harness and the store.
 `WORK_STORE` is required. The engine does not start without it.
 
     "work": {
-      "command": "docker",
-      "args": ["run", "-i", "--rm", "-v", "<root>:<root>",
-               "-e", "WORK_STORE=<root>/work-store",
-               "work-engine:0.1.0", "python", "<root>/harness/engine/engine.py"]
+      "command": "bash",
+      "args": ["<root>/harness/scripts/run-engine.sh", "<root>", "<root>/work-store", "<root>/harness"],
+      "env": {"WORK_PROJECT": "<owner>/<number>"}
     }
+
+This is the same as `claude mcp add work --scope user -e WORK_PROJECT=<owner>/<number> -- bash "$HARNESS/scripts/run-engine.sh" "$ROOT" "$STORE" "$HARNESS"`.
+`run-engine.sh` starts the container and reads the board tokens from the keychain.
+The board is optional. Without `WORK_PROJECT`, the engine makes no GitHub call.
+
+See [GitHub tokens](../clients/claude.md#github-tokens).
 
 Do not auto-approve `work_approve`. The client must ask you each time.
 
@@ -42,7 +47,7 @@ Do not auto-approve `work_approve`. The client must ask you each time.
 1. `pipeline.yaml`: the phases, gates and approvals.
 2. `phases/*.md`: what the agent does in each phase.
 3. `engine.py`: the 6 tools (the public contract).
-4. `state.py`, `models.py`, `dispatch.py`, `gates.py`: what the tools call, in that order.
+4. `state.py`, `board.py`, `models.py`, `dispatch.py`, `gates.py`: what the tools call, in that order.
 
 ## Models
 

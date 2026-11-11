@@ -10,9 +10,31 @@ Set these in your shell. Use full paths.
 
 ## 1. Add the MCP server
 
-    claude mcp add work --scope user -- docker run -i --rm \
-      -v "$ROOT:$ROOT" -v "$STORE:$STORE" -e "WORK_STORE=$STORE" \
-      work-engine:0.1.0 python "$HARNESS/engine/engine.py"
+    claude mcp add work --scope user -e WORK_PROJECT=<owner>/<number> -- \
+      bash "$HARNESS/scripts/run-engine.sh" "$ROOT" "$STORE" "$HARNESS"
+
+`WORK_PROJECT` is the owner and number of the GitHub project board. Take both from its URL, like `github.com/users/<owner>/projects/<number>`. The board is optional: without `WORK_PROJECT`, the engine skips it.
+The script starts the engine container and reads the board tokens from your keychain (see below).
+
+### GitHub tokens
+
+The board needs two tokens. GitHub cannot give a narrower token for a project owned by a personal account. So a classic token is the smallest choice for the board.
+
+- `factory-board`: a classic token with only `project`, `read:org` and `read:discussion`. The last two are read-only, but `gh project` refuses to run without them. The engine uses it for every board call.
+- `factory-issues`: a fine-grained token with only Issues: read and write, on the repos you pick. The engine uses it to write comments.
+
+Make both with a short expiry, like 30 days. Store each one in the keychain. The command asks for the value, so it never shows in your shell history or the process list:
+
+    security add-generic-password -U -s factory-board -a "$USER" -w
+    security add-generic-password -U -s factory-issues -a "$USER" -w
+
+`scripts/run-engine.sh` reads them from the keychain and gives them to the container. The tokens are not in your shell environment or in the MCP config.
+But any program that runs as you can read them. `security find-generic-password` reads the keychain item without asking, and `docker inspect` shows the container's env. So an agent with Bash can read them.
+Neither token can push code or change CI. Three things limit the damage:
+
+- The narrow scopes above.
+- The deny rules in `settings/permissions.example.json` (step 3).
+- Optional: store the items with `-T ""`, as in `security add-generic-password -U -T "" -s factory-board -a "$USER" -w`. Then macOS asks you on every read, so at every engine start.
 
 Check it with `claude mcp get work`.
 
