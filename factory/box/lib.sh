@@ -44,7 +44,7 @@ guard_room() {  # box names that must not exist yet
   for name in "$@"; do
     docker inspect "$name" >/dev/null 2>&1 && refuse "box $name already exists: another run of this card is going"
   done
-  running="$(docker ps --format '{{.Names}}' | grep -cE '^factory-[0-9]+(-push)?$' || true)"
+  running="$(docker ps --format '{{.Names}}' | grep -cE '^factory-[0-9]+(-push|-review)?$' || true)"
   [ "$running" -lt "$BOX_CAP" ] || refuse "$running factory boxes are running, the cap is $BOX_CAP"
   free_gib="$(df -k "$HOME" | awk 'NR == 2 { print int($4 / 1048576) }')"
   [ "$free_gib" -ge "$MIN_FREE_GIB" ] || refuse "only ${free_gib} GiB free disk, the floor is $MIN_FREE_GIB GiB"
