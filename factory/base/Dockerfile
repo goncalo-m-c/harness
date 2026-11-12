@@ -27,7 +27,7 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 # The digest-pinned base fixes the Debian release. Exact apt versions are not pinned: old ones disappear from the mirrors and break builds.
 # hadolint ignore=DL3008
 RUN apt-get update -qq \
- && apt-get install -y -qq --no-install-recommends git curl ca-certificates xz-utils iptables >/dev/null \
+ && apt-get install -y -qq --no-install-recommends git curl ca-certificates xz-utils iptables jq >/dev/null \
  && rm -rf /var/lib/apt/lists/*
 
 # slim has no sudo, but it ships su as setuid root. The box user must have no path to root.

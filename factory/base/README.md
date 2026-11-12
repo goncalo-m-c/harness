@@ -6,7 +6,7 @@ This folder builds that image and proves that a box started from it is safe.
 ## What is in the image
 
 - Debian 13 slim (`trixie`), pinned by digest, arm64
-- git, curl, Node 24 LTS, the Claude CLI and uv, at the versions pinned in the [`Dockerfile`](Dockerfile)
+- git, curl, jq, Node 24 LTS, the Claude CLI and uv, at the versions pinned in the [`Dockerfile`](Dockerfile)
 - one user, `agent`, with no `sudo` and no `su`
 - the Claude auto-updater turned off
 
