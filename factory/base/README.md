@@ -6,7 +6,7 @@ This folder builds that image and proves that a box started from it is safe.
 ## What is in the image
 
 - Debian 13 slim (`trixie`), pinned by digest, arm64
-- git, curl, Node 24 LTS, the Claude CLI and uv, at the versions pinned in the [`Dockerfile`](Dockerfile)
+- git, curl, jq, Node 24 LTS, the Claude CLI and uv, at the versions pinned in the [`Dockerfile`](Dockerfile)
 - one user, `agent`, with no `sudo` and no `su`
 - the Claude auto-updater turned off
 
@@ -15,16 +15,11 @@ A box gets its secrets only while a task runs, from the Mac.
 
 ## How a box protects the Mac
 
-A box starts as root for one moment. The [entrypoint](entrypoint.sh) sets a firewall for outgoing traffic:
+A box runs as `agent` from its first process, with **no capabilities** and with `no_new_privs`, so no process can gain rights back.
+It sees no Mac files except the one folder the box runner mounts at `/work`.
 
-- DNS and the internet stay open
-- the Mac and every private network are blocked: other containers, OrbStack machines, your home network
-
-Then it runs the command as `agent` with **no capabilities**, and with `no_new_privs`, so no process can gain rights back.
-`agent` cannot remove the firewall.
-
-The firewall needs `NET_ADMIN` while the box starts.
-A box started without it **does not start at all**, so there is never a box without its firewall.
+**The network is not isolated yet.** A box can reach the internet, and also the Mac and your local network.
+The first version had a firewall for that. It was taken out to keep the factory simple while it is being built, and comes back as its own card.
 
 How a box is started lives in [`box.env`](box.env): the image name, 2 GB of memory, 2 CPUs, and the flags every box needs.
 Docker cannot limit disk space per container here, so boxes must be removed as soon as their task ends.
@@ -46,26 +41,24 @@ Add `--no-cache` to build everything from zero.
 factory/base/check-base.sh
 ```
 
-It starts a throwaway box with the settings from `box.env`, runs seven checks the way the box runner works (`docker exec -u agent`), prints one PASS or FAIL line each, and removes the box.
+It starts a throwaway box with the settings from `box.env`, runs six checks the way the box runner works (`docker exec -u agent`), prints one PASS or FAIL line each, and removes the box.
 It exits 1 if any check fails.
 
 | Check | What it proves |
 |---|---|
-| 1 Mac localhost blocked | a listener on the Mac's `127.0.0.1` answers on the Mac, but not from the box through `host.docker.internal` or `0.250.250.254` |
-| 2 no Mac files | the box has no mounts and no `/Users` |
-| 3 internet | Anthropic, GitHub, PyPI and npm answer |
-| 4 no secrets | no credential files, no token-like environment variables in the box or the image |
-| 5 versions | every tool matches the version in the image labels |
-| 6 no privileges | `agent` has no capabilities, cannot gain any, has no `sudo`/`su`, and cannot remove the firewall |
-| 7 fails closed, limits applied | a box without `NET_ADMIN` does not start; the box has the memory and CPU limits from `box.env` |
+| 1 no Mac files | the box has no mounts and no `/Users` |
+| 2 internet | Anthropic, GitHub, PyPI and npm answer |
+| 3 no secrets | no credential files, no token-like environment variables in the box or the image |
+| 4 versions | every tool matches the version in the image labels |
+| 5 no privileges | `agent` has no capabilities, cannot gain any, has no `sudo`/`su` |
+| 6 limits applied | the box has the memory and CPU limits from `box.env` |
 
 Each check passes only when the box really confirmed the good state.
 A failure to run a command in the box is a FAIL, never a PASS.
-Check 1 runs its positive control on the Mac first, and only a blocked connection (curl exit 7) counts.
 To see the checks fail, run them against an image that is not a factory box:
 
 ```sh
-IMAGE=debian:trixie-slim factory/base/check-base.sh   # 7 FAIL
+IMAGE=debian:trixie-slim factory/base/check-base.sh   # FAIL lines
 ```
 
 ## Upgrade a tool
@@ -87,11 +80,11 @@ The check compares each tool with the image labels, so it also works for a build
 | File | Does |
 |---|---|
 | `Dockerfile` | the image: pinned base, tools, the `agent` user, labels with every pin |
-| `entrypoint.sh` | the firewall, then the drop to `agent` with no rights |
 | `box.env` | how a box is started; any value can be overridden from the environment |
-| `check-base.sh` | the seven checks |
+| `check-base.sh` | the six checks |
 
 ## Not here yet
 
+- Network isolation: block the Mac and the local network again
 - An allowlist by domain, so a box can reach only the hosts a task needs
 - More hardening, such as removing setuid bits from every binary

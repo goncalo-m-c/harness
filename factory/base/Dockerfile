@@ -27,7 +27,7 @@ SHELL ["/bin/bash", "-euo", "pipefail", "-c"]
 # The digest-pinned base fixes the Debian release. Exact apt versions are not pinned: old ones disappear from the mirrors and break builds.
 # hadolint ignore=DL3008
 RUN apt-get update -qq \
- && apt-get install -y -qq --no-install-recommends git curl ca-certificates xz-utils iptables >/dev/null \
+ && apt-get install -y -qq --no-install-recommends git curl ca-certificates xz-utils jq >/dev/null \
  && rm -rf /var/lib/apt/lists/*
 
 # slim has no sudo, but it ships su as setuid root. The box user must have no path to root.
@@ -51,11 +51,9 @@ ENV PATH=/home/agent/.local/bin:${PATH} \
 RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "${CLAUDE_VERSION}" >/dev/null
 RUN curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_NO_MODIFY_PATH=1 sh >/dev/null
 
-# The entrypoint starts as root to set the firewall, then runs the command as the box user.
-# A box stays alive with `sleep infinity`; the box runner works in it with `docker exec -u agent`.
-# Root is needed only to set the firewall; the entrypoint then drops to the box user.
-# hadolint ignore=DL3002
-USER root
-COPY --chmod=0755 entrypoint.sh /usr/local/bin/factory-entrypoint
-ENTRYPOINT ["/usr/local/bin/factory-entrypoint"]
+# The box runner mounts the repo at /work. ~/work points there, so prompts and skills can say ~/work.
+RUN ln -s /work /home/agent/work
+
+# A box runs as the box user from its first process: no root step, no entrypoint.
+# It stays alive with `sleep infinity`; the box runner works in it with `docker exec -u agent`.
 CMD ["sleep", "infinity"]
