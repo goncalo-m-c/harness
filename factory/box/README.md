@@ -1,9 +1,11 @@
 # factory box runner
 
-`build.sh` builds one card in a box and pushes its branch. It runs on the Mac.
+`build.sh` builds one card in a box and pushes its branch. `review.sh` reviews that branch with three reviewers and a vote.
+Both run on the Mac.
 
 ```sh
 factory/box/build.sh 2      # card 2 → branch factory-2
+factory/box/review.sh 2     # review factory-2 → verdict.json, and fixes.md when something must change
 ```
 
 ## The brief
@@ -31,8 +33,9 @@ Two boxes keep the GitHub token away from the agent.
 2. **Box `factory-<n>`.** `build.sh` clones the repo with the GitHub token.
    If `factory-<n>` already exists on GitHub, this is a **fix round**: it clones that branch, and adds `fixes.md` from the run folder to the prompt.
    It sets you as the commit author, and adds a hook that puts Claude as co-author in every commit.
+   It copies the skills named in `BUILD_SKILLS` from this repo's `skills/` into the box.
 3. **Agent.** `claude -p` runs with the Claude token only, for at most `AGENT_TIMEOUT`.
-   It has the tools Bash, Read, Edit, Write, Glob and Grep, and no MCP servers.
+   It has the tools Bash, Read, Edit, Write, Glob, Grep and Skill, and no MCP servers.
    The agent checks its own work and runs the test.
 4. **Facts.** `build.sh` checks that there is at least one new commit and no uncommitted change.
    It packs the work into a git bundle and **removes the box**, so nothing the agent started is still running.
@@ -50,7 +53,7 @@ They reach a box only through stdin, never argv and never disk.
 | File | Written by | Holds |
 |---|---|---|
 | `brief.md` | the main agent | the card's spec |
-| `fixes.md` | the review (optional) | what to fix in the next round |
+| `fixes.md` | `review.sh`, only on fix | what to fix in the next build round |
 | `agent.jsonl` | `build.sh` | the agent's full transcript, with the Claude token scrubbed |
 | `handoff.md` | the agent | what it did and what it did not do; information only, never a gate |
 | `work.bundle` | `build.sh` | the agent's commits, so nothing is lost when a build fails |
@@ -65,3 +68,36 @@ They reach a box only through stdin, never argv and never disk.
 | 2 | refused before any box started: a bad brief, or a guard |
 
 The settings live in [`../base/box.env`](../base/box.env).
+
+## The review
+
+`review.sh <n>` reviews the pushed branch `factory-<n>` in one box, `factory-<n>-review`.
+
+1. **Guards.** As for a build. A build of the same card must not be running, and the branch must be on GitHub.
+2. **Clone.** This is the only step with the GitHub token. The clone's push URL is set to `none`, so the box cannot push.
+   The box gets the brief, the diff against the default branch, the skills in `REVIEW_SKILLS`, and the `factory-reviewer` agent.
+3. **Test.** `review.sh` runs the brief's `test` in the box. If it fails, the verdict is **fix** with the test output, and no reviewer runs.
+4. **Session.** One `claude -p` session on sonnet only dispatches. It starts three `factory-reviewer` subagents on opus.
+   - **Round 1:** each reviewer works alone and writes its findings.
+   - **Round 2:** each reviewer votes on the other two reviewers' findings.
+   The aspects, file shapes and vote rules are in [`skills/factory-review`](../../skills/factory-review/SKILL.md).
+5. **Model guard.** Every message in the transcript is from sonnet or opus, and every reviewer message is from opus.
+6. **Count.** [`count.sh`](count.sh) checks all six files again, then decides. A script decides, not a model.
+   - A finding with its author and at least one other reviewer agreeing is a **fix**.
+   - A finding with only its author is a **note**, and does not block.
+   - A withdrawn finding is dropped.
+   - A missing or broken file makes the review **broken**. It is never a pass.
+
+[`test-count.sh`](test-count.sh) proves these rules with seeded votes. It needs no box and no model.
+
+The review adds these files to the run folder:
+
+| File | Holds |
+|---|---|
+| `verdict.json` | `verdict` (`pass`, `fix`, `broken`, `refused`), `reason`, `sha_reviewed`, the test command and exit code, `fixes`, `notes`, `withdrawn`, and the raw reviewer files |
+| `fixes.md` | one section per fix, which `build.sh` reads in the next round |
+| `review.jsonl` | the session transcript, with the Claude token scrubbed |
+| `review-test.log` | the output of the brief's test |
+| `out/` | the six reviewer files |
+
+Exit 0: pass. Exit 1: fix. Exit 2: broken or refused.
