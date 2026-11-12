@@ -26,5 +26,6 @@ for net in "${BLOCK_V6[@]}"; do ip6tables -A OUTPUT -d "$net" -j REJECT; done
 
 # --inh-caps and --bounding-set remove every capability, also the ones a process could inherit or regain.
 # --no-new-privs stops setuid binaries from giving rights back.
+# --reset-env gives the command the box user's own HOME, USER and SHELL instead of root's.
 exec setpriv --reuid="$BOX_USER" --regid="$BOX_USER" --init-groups \
-  --inh-caps=-all --bounding-set=-all --no-new-privs -- "$@"
+  --inh-caps=-all --bounding-set=-all --no-new-privs --reset-env -- "$@"

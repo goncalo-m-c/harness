@@ -56,7 +56,7 @@ It exits 1 if any check fails.
 | 3 internet | Anthropic, GitHub, PyPI and npm answer |
 | 4 no secrets | no credential files, no token-like environment variables in the box or the image |
 | 5 versions | every tool matches the version in the image labels |
-| 6 no privileges | `agent` has no capabilities, cannot gain any, has no `sudo`/`su`, and cannot remove the firewall |
+| 6 no privileges | `agent` has no capabilities, cannot gain any, has no `sudo`/`su`, and cannot remove the firewall; the entrypoint gives the command `agent`'s own home, so a login shell finds `claude` |
 | 7 fails closed, limits applied | a box without `NET_ADMIN` does not start; the box has the memory and CPU limits from `box.env` |
 
 Each check passes only when the box really confirmed the good state.
