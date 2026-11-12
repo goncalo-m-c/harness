@@ -1,9 +1,11 @@
 # factory box runner
 
-`build.sh` builds one card in a box and pushes its branch. It runs on the Mac.
+`build.sh` builds one card in a box and pushes its branch. `review.sh` reviews that branch with three reviewers and a vote.
+Both run on the Mac.
 
 ```sh
 factory/box/build.sh 2      # card 2 → branch factory-2
+factory/box/review.sh 2     # review factory-2 → verdict.json, and fixes.md when something must change
 ```
 
 ## The box
@@ -80,3 +82,39 @@ The fixed job ("one commit per task, run the test until it passes, write `~/hand
 | 0 | pushed |
 | 1 | the build failed, nothing was pushed, the evidence is kept |
 | 2 | refused before any work started: a bad brief, or a guard |
+
+## The review
+
+`review.sh <n>` reviews the pushed branch `factory-<n>` in one box, `factory-<n>-review`.
+
+1. **Guards.** As for a build. A build of the same card must not be running, and the branch must be on GitHub.
+2. **Clone on the Mac.** The Mac clones the branch into `review-work/` and writes the diff against the default branch, before any box exists.
+   The box gets that clone at `/work`, the brief, the diff, the skills in `REVIEW_SKILLS`, and the `factory-reviewer` agent.
+   It has no GitHub login, so it cannot push.
+3. **Test.** `review.sh` runs the brief's `test` in the box. If it fails, the verdict is **fix** with the test output, and no reviewer runs.
+4. **Session.** One `claude -p` session on sonnet only dispatches. It starts three `factory-reviewer` subagents on opus.
+   - **Round 1:** each reviewer works alone and writes its findings.
+   - **Round 2:** each reviewer votes on the other two reviewers' findings.
+   The aspects, file shapes and vote rules are in [`skills/factory-review`](../../skills/factory-review/SKILL.md).
+   The six reviewer files come out of the box one by one, by name.
+5. **Model guard.** Every message in the transcript is from sonnet or opus, and every reviewer message is from opus.
+6. **Count.** [`count.sh`](count.sh) checks all six files again, then decides. A script decides, not a model.
+   - A finding with its author and at least one other reviewer agreeing is a **fix**.
+   - A finding with only its author is a **note**, and does not block.
+   - A withdrawn finding is dropped.
+   - A missing or broken file makes the review **broken**. It is never a pass.
+
+[`test-count.sh`](test-count.sh) proves these rules with seeded votes. It needs no box and no model.
+
+The review adds these files to the run folder:
+
+| File | Holds |
+|---|---|
+| `verdict.json` | `verdict` (`pass`, `fix`, `broken`, `refused`), `reason`, `sha_reviewed`, the test command and exit code, `fixes`, `notes`, `withdrawn`, and the raw reviewer files |
+| `fixes.md` | one section per fix, which `build.sh` reads in the next round |
+| `diff.patch` | the diff the reviewers read |
+| `review.jsonl` | the session transcript, with the Claude token scrubbed |
+| `review-test.log` | the output of the brief's test |
+| `out/` | the six reviewer files |
+
+Exit 0: pass. Exit 1: fix. Exit 2: broken or refused.
