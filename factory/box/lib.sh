@@ -76,6 +76,19 @@ with_github() {  # box script [docker exec flags...]
     '"$script"
 }
 
+# Copies skills from this repo's skills/ into the box at ~/.agents/skills, the same path as on the Mac,
+# because skills name their own scripts by that path. ~/.claude/skills links to it, so Claude finds them.
+# tar -h follows links; COPYFILE_DISABLE and --no-xattrs keep macOS metadata out of the box.
+put_skills() {  # box "skill names"
+  local names
+  read -ra names <<<"$2"
+  [ "${#names[@]}" -gt 0 ] || return 0
+  (cd "$here/../../skills" && COPYFILE_DISABLE=1 tar --no-xattrs -chf - "${names[@]}") |
+    docker exec -i -u agent "$1" bash -c '
+      mkdir -p ~/.agents/skills ~/.claude && tar -C ~/.agents/skills -xf - && ln -sfn ../.agents/skills ~/.claude/skills
+    ' || fail "could not copy the skills ${names[*]} into $1"
+}
+
 # Runs claude -p in a box with the prompt from stdin, and prints its stream-json transcript.
 # The Claude token is sent as the first stdin line. The session may print its own env,
 # so every line is scrubbed of the token before it leaves this function.
