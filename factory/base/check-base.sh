@@ -103,6 +103,16 @@ bad=""
 [ "$(in_box 'grep NoNewPrivs /proc/1/status' 2>/dev/null | cut -f2 || true)" = 1 ] || bad="$bad pid1-can-gain-rights"
 [ "$(in_box 'grep NoNewPrivs /proc/self/status' 2>/dev/null | cut -f2 || true)" = 1 ] || bad="$bad exec-can-gain-rights"
 in_box 'command -v sudo || command -v su' >/dev/null 2>&1 && bad="$bad sudo-or-su-present"
+# The tools the factory runs must not be the box user's to change, and no folder of the box user's may come
+# before them on PATH. Otherwise a planted program runs in their place. Plain bash -c, the way the runner calls them.
+for tool in claude git timeout; do
+  path="$(docker exec -u agent "$box" bash -c "command -v $tool" 2>/dev/null || true)"
+  if [ -z "$path" ] || docker exec -u agent "$box" bash -c "test -w '$path' || test -w '${path%/*}'" 2>/dev/null; then
+    bad="$bad $tool-replaceable(${path:-missing})"
+  fi
+done
+early="$(docker exec -u agent "$box" bash -c 'IFS=:; set -- $PATH; while [ $# -gt 1 ]; do case "$1" in /home/*) echo "$1" ;; esac; shift; done' 2>/dev/null || echo cannot-read-PATH)"
+[ -z "$early" ] || bad="$bad user-folder-early-on-PATH($early)"
 if [ -n "$bad" ]; then fail "$name" "$bad"; else pass "$name"; fi
 
 # 6. The box has the limits from box.env.

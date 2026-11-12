@@ -8,6 +8,7 @@ This folder builds that image and proves that a box started from it is safe.
 - Debian 13 slim (`trixie`), pinned by digest, arm64
 - git, curl, jq, Node 24 LTS, the Claude CLI and uv, at the versions pinned in the [`Dockerfile`](Dockerfile)
 - one user, `agent`, with no `sudo` and no `su`
+- `claude`, `uv` and `uvx` in `/usr/local/bin`, owned by root, so `agent` cannot replace them. `~/.local/bin` comes last on `PATH`
 - the Claude auto-updater turned off
 
 What is **not** in the image: any login, any token, `gh`, Docker.
@@ -50,7 +51,7 @@ It exits 1 if any check fails.
 | 2 internet | Anthropic, GitHub, PyPI and npm answer |
 | 3 no secrets | no credential files, no token-like environment variables in the box or the image |
 | 4 versions | every tool matches the version in the image labels |
-| 5 no privileges | `agent` has no capabilities, cannot gain any, has no `sudo`/`su` |
+| 5 no privileges | `agent` has no capabilities, cannot gain any, has no `sudo`/`su`, and cannot change or shadow `claude`, `git` or `timeout` |
 | 6 limits applied | the box has the memory and CPU limits from `box.env` |
 
 Each check passes only when the box really confirmed the good state.

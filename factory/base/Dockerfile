@@ -43,13 +43,22 @@ RUN archive="node-${NODE_VERSION}-linux-arm64.tar.xz" \
 
 RUN useradd --create-home --shell /bin/bash agent
 
-# The box user's own tools. ~/.local/bin is on PATH for every process, and Debian's ~/.profile adds it for login shells.
+# The installers run as the box user, then the step below moves their tools out of its reach.
 USER agent
 WORKDIR /home/agent
-ENV PATH=/home/agent/.local/bin:${PATH} \
-    DISABLE_AUTOUPDATER=1
+ENV DISABLE_AUTOUPDATER=1
 RUN curl -fsSL https://claude.ai/install.sh | bash -s -- "${CLAUDE_VERSION}" >/dev/null
 RUN curl -LsSf "https://astral.sh/uv/${UV_VERSION}/install.sh" | env UV_NO_MODIFY_PATH=1 sh >/dev/null
+
+# The factory runs claude in every box. If the box user could change that file, or put its own claude or git
+# earlier on PATH, a planted program would run in place of the real one. So the tools live in /usr/local/bin,
+# owned by root, and ~/.local/bin (for what a task installs) comes last on PATH.
+USER root
+RUN install -m 0755 "/home/agent/.local/share/claude/versions/${CLAUDE_VERSION}" /usr/local/bin/claude \
+ && install -m 0755 /home/agent/.local/bin/uv /home/agent/.local/bin/uvx /usr/local/bin/ \
+ && rm -rf /home/agent/.local/bin /home/agent/.local/share/claude
+USER agent
+ENV PATH=${PATH}:/home/agent/.local/bin
 
 # The box runner mounts the repo at /work. ~/work points there, so prompts and skills can say ~/work.
 RUN ln -s /work /home/agent/work
