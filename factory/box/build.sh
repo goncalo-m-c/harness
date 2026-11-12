@@ -17,8 +17,8 @@ result() {  # status reason
   jq -n --arg status "$1" --arg reason "$2" --arg branch "$key" --arg sha "$sha" \
     '{status: $status, reason: $reason, branch: $branch, sha: $sha}' >"$run/result.json"
 }
-refuse() { result refused "$1"; echo "build $key refused: $1" >&2; exit 2; }
-fail() { result failed "$1"; echo "build $key failed: $1 (evidence in $run)" >&2; exit 1; }
+refuse() { result refused "$1"; printf '%s\n' "build $key refused: $1" >&2; exit 2; }
+fail() { result failed "$1"; printf '%s\n' "build $key failed: $1 (evidence in $run)" >&2; exit 1; }
 
 # shellcheck source=lib.sh
 . "$(dirname "$0")/lib.sh"
@@ -48,9 +48,9 @@ clone_out="$(with_github "$box" '
   gitauth clone -q "https://github.com/$REPO.git" work
   cd work
   if gitauth ls-remote --exit-code --heads origin "$BRANCH" >/dev/null; then
-    git switch -q "$BRANCH"; echo "round=fix"
+    git switch -q "$BRANCH"; printf "%s\n" "round=fix"
   else
-    git switch -q -c "$BRANCH"; echo "round=first"
+    git switch -q -c "$BRANCH"; printf "%s\n" "round=first"
   fi
   git config user.name "$NAME"; git config user.email "$EMAIL"
   cat >.git/hooks/commit-msg <<"HOOK"
@@ -58,8 +58,8 @@ clone_out="$(with_github "$box" '
 grep -qi "^Co-Authored-By: Claude" "$1" || git interpret-trailers --in-place --trailer "Co-Authored-By: Claude <noreply@anthropic.com>" "$1"
 HOOK
   chmod +x .git/hooks/commit-msg
-  echo "default=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed "s|^origin/||")"
-  echo "base=$(git rev-parse HEAD)"
+  printf "%s\n" "default=$(git symbolic-ref --short refs/remotes/origin/HEAD | sed "s|^origin/||")"
+  printf "%s\n" "base=$(git rev-parse HEAD)"
 ' -e REPO="$repo" -e BRANCH="$key" -e NAME="$BOX_GIT_NAME" -e EMAIL="$BOX_GIT_EMAIL")" || fail "clone of $repo failed"
 round="$(sed -n 's/^round=//p' <<<"$clone_out")"
 default="$(sed -n 's/^default=//p' <<<"$clone_out")"
@@ -83,8 +83,8 @@ docker cp "$box:/home/agent/handoff.md" "$run/handoff.md" >/dev/null 2>&1 || ste
 
 step "check the agent's work"
 facts="$(docker exec -u agent -w /home/agent/work -e BASE="$base" "$box" bash -c '
-  echo "new=$(git rev-list --count "$BASE"..HEAD)"
-  echo "dirty=$(git status --porcelain | wc -l)"
+  printf "%s\n" "new=$(git rev-list --count "$BASE"..HEAD)"
+  printf "%s\n" "dirty=$(git status --porcelain | wc -l)"
   git bundle create -q /home/agent/work.bundle HEAD
 ')" || fail "could not read the agent's work"
 docker cp "$box:/home/agent/work.bundle" "$run/work.bundle" >/dev/null
@@ -107,13 +107,13 @@ push_out="$(with_github "$push_box" '
   git config user.name "$NAME"; git config user.email "$EMAIL"
   git fetch -q /tmp/work.bundle "HEAD:refs/heads/$BRANCH"
   git switch -q "$BRANCH"
-  git rebase -q "origin/$DEFAULT" >/dev/null 2>&1 || { git rebase --abort; echo "conflict"; exit 3; }
+  git rebase -q "origin/$DEFAULT" >/dev/null 2>&1 || { git rebase --abort; printf "%s\n" "conflict"; exit 3; }
   if lease="$(git rev-parse -q --verify "refs/remotes/origin/$BRANCH")"; then
     gitauth push -q --force-with-lease="refs/heads/$BRANCH:$lease" origin "HEAD:refs/heads/$BRANCH"
   else
     gitauth push -q origin "HEAD:refs/heads/$BRANCH"
   fi
-  echo "sha=$(git rev-parse HEAD)"
+  printf "%s\n" "sha=$(git rev-parse HEAD)"
 ' -e REPO="$repo" -e BRANCH="$key" -e DEFAULT="$default" -e NAME="$BOX_GIT_NAME" -e EMAIL="$BOX_GIT_EMAIL")" || {
   grep -qx conflict <<<"$push_out" && fail "the work conflicts with the latest $default"
   fail "the push failed"

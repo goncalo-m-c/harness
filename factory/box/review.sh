@@ -19,8 +19,8 @@ verdict() {  # verdict reason [counted json from count.sh]
      test: {command: $command, exit: ($exit | tonumber? // null)}} + .
   ' <<<"${3:-"{\"fixes\": [], \"notes\": [], \"withdrawn\": [], \"raw\": {}}"}" >"$run/verdict.json"
 }
-refuse() { verdict refused "$1"; echo "review $key refused: $1" >&2; exit 2; }
-fail() { verdict broken "$1"; echo "review $key broken: $1 (evidence in $run)" >&2; exit 2; }
+refuse() { verdict refused "$1"; printf '%s\n' "review $key refused: $1" >&2; exit 2; }
+fail() { verdict broken "$1"; printf '%s\n' "review $key broken: $1 (evidence in $run)" >&2; exit 2; }
 
 # shellcheck source=lib.sh
 . "$(dirname "$0")/lib.sh"
@@ -46,15 +46,15 @@ step "clone $key from $repo"
 # The script runs in the box, so its variables must expand there, not here.
 # shellcheck disable=SC2016
 clone_out="$(with_github "$box" '
-  gitauth ls-remote --exit-code --heads "https://github.com/$REPO.git" "$BRANCH" >/dev/null || { echo "no-branch"; exit 3; }
+  gitauth ls-remote --exit-code --heads "https://github.com/$REPO.git" "$BRANCH" >/dev/null || { printf "%s\n" "no-branch"; exit 3; }
   gitauth clone -q --branch "$BRANCH" "https://github.com/$REPO.git" work
   cd work
   git remote set-url --push origin none
   default="$(git symbolic-ref --short refs/remotes/origin/HEAD | sed "s|^origin/||")"
   mkdir -p ~/review/out
   git diff "origin/$default...HEAD" >~/review/diff.patch
-  echo "default=$default"
-  echo "sha=$(git rev-parse HEAD)"
+  printf "%s\n" "default=$default"
+  printf "%s\n" "sha=$(git rev-parse HEAD)"
 ' -e REPO="$repo" -e BRANCH="$key")" || {
   grep -qx no-branch <<<"$clone_out" && refuse "branch $key is not on GitHub"
   fail "clone of $repo failed"
@@ -79,15 +79,12 @@ docker exec -u agent -w /home/agent/work -e TEST="$test_cmd" -e TIMEOUT="$TEST_T
 put_in_box "$run/review-test.log" /home/agent/review/test.log
 if [ "$test_exit" != 0 ]; then
   {
-    echo "# Fixes from the review"
-    echo
-    echo "### tests: the test command fails"
-    echo
-    echo "\`$test_cmd\` exited $test_exit. The last 100 lines of its output:"
-    echo
-    echo '```'
+    printf '# Fixes from the review\n\n### tests: the test command fails\n\n'
+    # The backticks are Markdown, not a command.
+    # shellcheck disable=SC2016
+    printf '`%s` exited %s. The last 100 lines of its output:\n\n```\n' "$test_cmd" "$test_exit"
     tail -n 100 "$run/review-test.log"
-    echo '```'
+    printf '```\n'
   } >"$run/fixes.md"
   verdict fix "the test command exited $test_exit"
   step "fix: the test fails, no reviewers ran"

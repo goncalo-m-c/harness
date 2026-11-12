@@ -9,7 +9,7 @@ here="$(cd "$(dirname "$0")" && pwd)"
 # shellcheck source=box.env
 . "$here/box.env"
 
-docker image inspect "$IMAGE" >/dev/null 2>&1 || { echo "image $IMAGE not found. Build it with: docker build -t $IMAGE $here" >&2; exit 1; }
+docker image inspect "$IMAGE" >/dev/null 2>&1 || { printf '%s\n' "image $IMAGE not found. Build it with: docker build -t $IMAGE $here" >&2; exit 1; }
 
 box="factory-check-$$"
 port=$((50000 + RANDOM % 10000))
@@ -25,8 +25,8 @@ cleanup() {
 }
 trap cleanup EXIT
 
-pass() { echo "PASS  $1"; }
-fail() { echo "FAIL  $1: $2"; failures=$((failures + 1)); }
+pass() { printf '%s\n' "PASS  $1"; }
+fail() { printf '%s\n' "FAIL  $1: $2"; failures=$((failures + 1)); }
 # Runs a command in the box the way the box runner will: as the box user, in a login shell.
 in_box() { docker exec -u agent "$box" bash -lc "$1"; }
 in_box_root() { docker exec -u root "$box" bash -c "$1"; }
@@ -34,17 +34,17 @@ label() { docker image inspect "$IMAGE" --format "{{index .Config.Labels \"$1\"}
 bytes() {  # 2g -> 2147483648, 512m -> 536870912
   local n="${1%[gGmMkK]}"
   case "$1" in
-    *[gG]) echo $((n * 1024 * 1024 * 1024)) ;;
-    *[mM]) echo $((n * 1024 * 1024)) ;;
-    *[kK]) echo $((n * 1024)) ;;
-    *) echo "$n" ;;
+    *[gG]) printf '%s\n' "$((n * 1024 * 1024 * 1024))" ;;
+    *[mM]) printf '%s\n' "$((n * 1024 * 1024))" ;;
+    *[kK]) printf '%s\n' "$((n * 1024))" ;;
+    *) printf '%s\n' "$n" ;;
   esac
 }
 
-echo "==> start box $box from $IMAGE"
+printf '%s\n' "==> start box $box from $IMAGE"
 docker run -d --name "$box" "${BOX_FLAGS[@]}" "$IMAGE" sleep infinity >/dev/null
 sleep 1
-[ "$(docker inspect -f '{{.State.Running}}' "$box")" = true ] || { echo "the box did not start:" >&2; docker logs "$box" >&2; exit 1; }
+[ "$(docker inspect -f '{{.State.Running}}' "$box")" = true ] || { printf '%s\n' "the box did not start:" >&2; docker logs "$box" >&2; exit 1; }
 
 # 1. The Mac's 127.0.0.1 answers on the Mac (positive control) but not from the box.
 # A blocked connection makes curl exit 7. Any other code (for example 127, curl missing) proves nothing.
@@ -96,13 +96,13 @@ if ! user_env="$(in_box env 2>/dev/null)"; then
   fail "$name" "cannot read the box user's environment"
   user_env=""
 fi
-box_env="$(echo "$user_env" | grep -iE "$token_re" | cut -d= -f1 || true)"
+box_env="$(printf '%s\n' "$user_env" | grep -iE "$token_re" | cut -d= -f1 || true)"
 if [ -z "$user_env" ]; then
   :  # already failed above
 elif [ -n "$found" ]; then
-  fail "$name" "credential files: $(echo "$found" | tr '\n' ' ')"
+  fail "$name" "credential files: $(printf '%s\n' "$found" | tr '\n' ' ')"
 elif [ -n "$box_env$image_env" ]; then
-  fail "$name" "token-like env vars: $(echo "$box_env $image_env" | tr '\n' ' ')"
+  fail "$name" "token-like env vars: $(printf '%s\n' "$box_env $image_env" | tr '\n' ' ')"
 else
   pass "$name"
 fi
@@ -133,9 +133,9 @@ in_box 'command -v sudo || command -v su' >/dev/null 2>&1 && bad="$bad sudo-or-s
 # The command the entrypoint started must run with the box user's home, so a login shell finds claude.
 [ "$(in_box 'tr "\\0" "\\n" < /proc/1/environ | grep "^HOME="' 2>/dev/null || true)" = HOME=/home/agent ] || bad="$bad pid1-home-not-agent"
 docker run --rm "${BOX_FLAGS[@]}" "$IMAGE" bash -lc 'command -v claude' >/dev/null 2>&1 || bad="$bad entrypoint-login-shell-has-no-claude"
-rules_before="$(in_box_root 'iptables -S OUTPUT | wc -l' 2>/dev/null || echo 0)"
+rules_before="$(in_box_root 'iptables -S OUTPUT | wc -l' 2>/dev/null || printf '0\n')"
 in_box 'iptables -F' >/dev/null 2>&1 && bad="$bad agent-flushed-firewall"
-rules_after="$(in_box_root 'iptables -S OUTPUT | wc -l' 2>/dev/null || echo 0)"
+rules_after="$(in_box_root 'iptables -S OUTPUT | wc -l' 2>/dev/null || printf '0\n')"
 { [ "$rules_before" -gt 1 ] && [ "$rules_after" = "$rules_before" ]; } || bad="$bad firewall-rules(before=$rules_before,after=$rules_after)"
 if [ -n "$bad" ]; then fail "$name" "$bad"; else pass "$name"; fi
 
@@ -147,5 +147,5 @@ docker run --rm "$IMAGE" true >/dev/null 2>&1 && bad="$bad started-without-NET_A
 [ "$(docker inspect -f '{{.HostConfig.NanoCpus}}' "$box")" = "$((BOX_CPUS * 1000000000))" ] || bad="$bad cpus"
 if [ -n "$bad" ]; then fail "$name" "$bad"; else pass "$name"; fi
 
-echo "==> $failures check(s) failed"
+printf '%s\n' "==> $failures check(s) failed"
 [ "$failures" = 0 ]

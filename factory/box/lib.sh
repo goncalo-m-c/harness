@@ -7,15 +7,15 @@ here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=../base/box.env
 . "$here/../base/box.env"
 
-step() { echo "==> $*" >&2; }
+step() { printf '==> %s\n' "$*" >&2; }
 
 # Sets key, run and brief for card <n>.
 load_card() {
-  [[ "${1:-}" =~ ^[0-9]+$ ]] || { echo "usage: $(basename "$0") <card number>" >&2; exit 2; }
+  [[ "${1:-}" =~ ^[0-9]+$ ]] || { printf '%s\n' "usage: $(basename "$0") <card number>" >&2; exit 2; }
   key="factory-$1"
   run="${FACTORY_HOME:-$HOME/.factory}/runs/$key"
   brief="$run/brief.md"
-  [ -f "$brief" ] || { echo "no brief at $brief" >&2; exit 2; }
+  [ -f "$brief" ] || { printf '%s\n' "no brief at $brief" >&2; exit 2; }
 }
 
 # A value from the brief's "## Box" section, for example `repo: owner/name`.
@@ -71,7 +71,7 @@ with_github() {  # box script [docker exec flags...]
   shift 2
   printf '%s\n' "$github_token" | docker exec -i -u agent -w /home/agent "$@" "$target" bash -c '
     read -r GIT_TOKEN; export GIT_TOKEN
-    gitauth() { git -c credential.helper= -c "credential.helper=!f(){ echo username=x-access-token; echo \"password=\$GIT_TOKEN\"; }; f" "$@"; }
+    gitauth() { git -c credential.helper= -c "credential.helper=!f(){ printf \"%s\\n\" username=x-access-token \"password=\$GIT_TOKEN\"; }; f" "$@"; }
     set -euo pipefail
     '"$script"
 }
