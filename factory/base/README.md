@@ -88,7 +88,7 @@ The check compares each tool with the image labels, so it also works for a build
 |---|---|
 | `Dockerfile` | the image: pinned base, tools, the `agent` user, labels with every pin |
 | `entrypoint.sh` | the firewall, then the drop to `agent` with no rights |
-| `box.env` | how a box is started; any value can be overridden from the environment |
+| `box.env` | how a box is started, the runner limits and the commit author; any value can be overridden from the environment |
 | `check-base.sh` | the seven checks |
 
 ## Not here yet
