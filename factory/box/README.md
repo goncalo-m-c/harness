@@ -101,3 +101,18 @@ The review adds these files to the run folder:
 | `out/` | the six reviewer files |
 
 Exit 0: pass. Exit 1: fix. Exit 2: broken or refused.
+
+## The loop
+
+`loop.sh <n>` builds and reviews card `<n>` until a review passes, for at most `MAX_ROUNDS` rounds (3).
+A round is one review.
+
+- `rounds.log` gets one line per finished review: `<round> <sha> <pass|fix> <reason>`.
+  It is the only round state, so a re-run continues where the last run stopped.
+  - If the pushed sha has no line yet, the loop reviews it first.
+  - Otherwise it builds.
+- It stops at once on a failed build, a broken review, or when the rounds are used up.
+  Then it asks you. It never retries by itself.
+- `loop.json` holds `status` (`pass` or `stopped`), `reason`, `rounds` and `sha`.
+
+Exit 0: pass. Exit 1: stopped. [`test-loop.sh`](test-loop.sh) proves the loop with a fake build and a fake review.
