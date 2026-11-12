@@ -75,7 +75,7 @@ prompt="$(cat "$brief")"
 if [ "$round" = fix ] && [ -f "$run/fixes.md" ]; then
   prompt="$prompt"$'\n\n## Fixes to make in this round\n\n'"$(cat "$run/fixes.md")"
 fi
-job="You build this task in a sandbox box. Do the tasks. One commit per task. Run \`$test_cmd\` and fix until it passes. Write ~/handoff.md: what you did, what you did not do. You cannot push: the factory pushes your commits."
+job="You build this task in a sandbox box. Do the tasks. One commit per task. Run \`$test_cmd\` and fix until it passes. Write ~/handoff.md: what you did, what you did not do. You cannot push: the factory pushes your commits. Never change .github/: the factory refuses to push it."
 
 step "agent ($model, timeout $AGENT_TIMEOUT)"
 agent_code=0
@@ -103,6 +103,12 @@ delete_box "$box"
 step "push $key"
 ghgit clone -q "$url" "$push" || fail "the second clone of $repo failed"
 git -C "$push" fetch -q "$run/work.bundle" "HEAD:refs/heads/$key" || fail "the bundle does not apply on $repo"
+# GitHub runs what is in .github/ (workflows, actions) with the repo's secrets as soon as a branch is pushed,
+# before any review. So the factory never pushes commits that change it. Only the branch tip counts:
+# GitHub reads the workflows from the tip, so a file added and removed again does no harm.
+ci="$(git -C "$push" diff --no-renames --name-only "$base" "refs/heads/$key" -- .github)" ||
+  fail "could not list the files the agent changed"
+[ -z "$ci" ] || fail "the agent's commits change ${ci//$'\n'/, }: GitHub would run them before review, so nothing was pushed"
 ghgit -C "$push" push -q origin "refs/heads/$key:refs/heads/$key" || fail "the push failed (did $key move on GitHub?)"
 sha="$(git -C "$push" rev-parse "refs/heads/$key")"
 

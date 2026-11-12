@@ -53,6 +53,9 @@ The fixed job ("one commit per task, run the test until it passes, write `~/hand
    The box streams the new commits out as a git bundle, and is deleted.
 5. **Push from the Mac.** The Mac never runs git in `work/` again, because the agent could have planted hooks or config there.
    It fetches the bundle into a fresh clone and pushes `refs/heads/factory-<n>`, and nothing else.
+   **It refuses to push commits that change `.github/`.** GitHub runs workflows from a pushed branch with the repo's secrets, before any review.
+   When a card really needs a workflow change, make that change by hand.
+   Other CI that runs the repo's own code on every push (for example a test job on all branches) can still run agent code. Run CI only on `main` and on PRs, or keep its secrets in an environment limited to `main`.
    The push is never forced. A fix round only adds commits, so the push fails if the branch moved on GitHub in the meantime.
 6. The box, `work/` and the fresh clone are deleted, also on failure.
 
