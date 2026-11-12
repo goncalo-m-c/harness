@@ -38,6 +38,7 @@ test: <command that proves the work>
 ```
 
 `repo` and `test` are required, and `build.sh` refuses the brief without them.
+`check-brief.sh <n>` runs the same checks without starting a box. It prints `ok <repo> <model> <test>` or exits 2.
 `model` is `haiku`, `sonnet` or `opus`, and defaults to `sonnet`.
 The fixed job ("one commit per task, run the test until it passes, write `~/handoff.md`") is not in the brief.
 `build.sh` adds it as a system prompt.
