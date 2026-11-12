@@ -123,6 +123,7 @@ Exit 0: pass. Exit 1: fix. Exit 2: broken or refused.
 ## The loop
 
 `loop.sh <n>` builds and reviews card `<n>` until a review passes, for at most `MAX_ROUNDS` rounds (3).
+The main agent runs it through the [`factory`](../../skills/factory/SKILL.md) skill (`/factory <n>`), which also moves the Trello card and opens the draft PR.
 A round is one review.
 
 - `rounds.log` gets one line per finished review: `<round> <sha> <pass|fix> <reason>`.
