@@ -47,7 +47,8 @@ The fixed job ("one commit per task, run the test until it passes, write `~/hand
    If `factory-<n>` already exists on GitHub, this is a **fix round**: it takes that branch, and adds `fixes.md` from the run folder to the prompt.
    It sets you as the commit author, and adds a hook that puts Claude as co-author in every commit.
 3. **Agent.** Box `factory-<n>` gets `work/` mounted at `/work`.
-   `claude -p` runs there for at most `AGENT_TIMEOUT`, with the tools Bash, Read, Edit, Write, Glob and Grep, and no MCP servers.
+   `claude -p` runs there for at most `AGENT_TIMEOUT`, with the tools Bash, Read, Edit, Write, Glob, Grep and Skill, and no MCP servers.
+   Before it starts, the skills named in `BUILD_SKILLS` are copied from this repo's `skills/` into the box.
    The agent checks its own work and runs the test.
 4. **Facts.** There must be at least one new commit and no uncommitted change.
    The box streams the new commits out as a git bundle, and is deleted.

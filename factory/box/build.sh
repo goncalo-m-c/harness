@@ -70,6 +70,7 @@ step "$round round on $key, default branch $default"
 # ---- 2. The agent in the box -----------------------------------------------------------------------------
 step "start $box"
 start_box "$box" "$work"
+put_skills "$box" "$BUILD_SKILLS"
 
 prompt="$(cat "$brief")"
 if [ "$round" = fix ] && [ -f "$run/fixes.md" ]; then
@@ -80,7 +81,7 @@ job="You build this task in a sandbox box. Do the tasks. One commit per task. Ru
 step "agent ($model, timeout $AGENT_TIMEOUT)"
 agent_code=0
 printf '%s\n' "$prompt" |
-  run_claude "$box" /work "$model" "$AGENT_TIMEOUT" Bash,Read,Edit,Write,Glob,Grep "$job" \
+  run_claude "$box" /work "$model" "$AGENT_TIMEOUT" Bash,Read,Edit,Write,Glob,Grep,Skill "$job" \
     >"$run/agent.jsonl" || agent_code=$?
 in_box "$box" 'cat ~/handoff.md' >"$run/handoff.md" 2>/dev/null || step "the agent wrote no handoff.md"
 [ "$agent_code" = 0 ] || fail "the agent step exited $agent_code (124 means it hit the $AGENT_TIMEOUT timeout)"

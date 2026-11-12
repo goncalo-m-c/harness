@@ -93,3 +93,15 @@ run_claude() {  # box workdir model timeout tools system-prompt
     ' _ "$4" "$3" "$5" "$6" |
     T="$claude_token" awk '{ while ((i = index($0, ENVIRON["T"])) > 0) $0 = substr($0, 1, i - 1) "[CLAUDE_TOKEN]" substr($0, i + length(ENVIRON["T"])); print }'
 }
+
+# Copies skills from this repo's skills/ into the box at ~/.agents/skills, the same path as on the Mac,
+# because skills name their own scripts by that path. ~/.claude/skills links to it, so Claude finds them.
+# tar -h follows links; COPYFILE_DISABLE and --no-xattrs keep macOS metadata out of the box.
+put_skills() {  # box "skill names"
+  local names
+  read -ra names <<<"$2"
+  [ "${#names[@]}" -gt 0 ] || return 0
+  (cd "$here/../../skills" && COPYFILE_DISABLE=1 tar --no-xattrs -chf - "${names[@]}") |
+    in_box "$1" 'mkdir -p ~/.agents/skills ~/.claude && tar -C ~/.agents/skills -xf - && ln -sfn ../.agents/skills ~/.claude/skills' ||
+    fail "could not copy the skills ${names[*]} into $1"
+}
